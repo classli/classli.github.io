@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="清楚的了解dex文件的结构属性，有助于对Android apk加固、Android hotpatch原理、Android虚拟机、Android逆向工程等的学习掌握。是Android高级开发工程师不可或缺的一个知识点。 dex文件大致结构struct DexFile { const DexHeader*    pHead">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dex 文件浅析">
+<meta property="og:url" content="http://yoursite.com/2017/12/02/Dex-文件浅析/index.html">
+<meta property="og:site_name" content="weixiao">
+<meta property="og:description" content="清楚的了解dex文件的结构属性，有助于对Android apk加固、Android hotpatch原理、Android虚拟机、Android逆向工程等的学习掌握。是Android高级开发工程师不可或缺的一个知识点。 dex文件大致结构struct DexFile { const DexHeader*    pHeader; const DexStringId*  pStringIds; cons">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-02T07:49:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dex 文件浅析">
+<meta name="twitter:description" content="清楚的了解dex文件的结构属性，有助于对Android apk加固、Android hotpatch原理、Android虚拟机、Android逆向工程等的学习掌握。是Android高级开发工程师不可或缺的一个知识点。 dex文件大致结构struct DexFile { const DexHeader*    pHeader; const DexStringId*  pStringIds; cons">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/02/Dex-文件浅析/"/>
+
+
+
+
+
+  <title>Dex 文件浅析 | weixiao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">weixiao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/02/Dex-文件浅析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="weixiao">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="weixiao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Dex 文件浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-02T15:48:35+08:00">
+                2017-12-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>清楚的了解dex文件的结构属性，有助于对Android apk加固、Android hotpatch原理、Android虚拟机、Android逆向工程等的学习掌握。是Android高级开发工程师不可或缺的一个知识点。</p>
+<h3 id="dex文件大致结构"><a href="#dex文件大致结构" class="headerlink" title="dex文件大致结构"></a>dex文件大致结构</h3><pre><code>struct DexFile {
+const DexHeader*    pHeader;
+const DexStringId*  pStringIds;
+const DexTypeId*    pStringIds;
+const DexFieldId*   pFieldIds;
+const DexMethodId*  pMethodIds;
+const DexProtoId*   pProtoIds;
+const DexClassDef*  pClassDefs;
+const DexLink*      pLinkData;
+}
+</code></pre><p>总的来说dex文件可以大致分为三部分：<br><a id="more"></a></p>
+<ol>
+<li><p>Header Section</p>
+</li>
+<li><p>Table Section</p>
+</li>
+<li><p>Data Section</p>
+</li>
+</ol>
+<p>具体Dex文件中各结构可查看/dalvik/libdex/DexFile.h</p>
+<h3 id="Header-Section"><a href="#Header-Section" class="headerlink" title="Header Section"></a>Header Section</h3><p>Header部分具体字段由DexHeader结构体定义，各个字段的含义以及字节大小可参照网上N多文章，这里不再细讲，总的可分4种类型字段：</p>
+<ol>
+<li>文件校验字段 magic，checksum和signature，这部分的数据让解析调用该文件的使用者明确这个文件是否已经篡改或者损坏。</li>
+<li>文件内容属性字段 file_size，header_size和endian_tag，dex文件自身属性相关内容。</li>
+<li>mapOff字段，用来表示DexMapList在Data Section中的偏移量，通过这个偏移量我们可以得到DexMapList数据，dalvik虚拟机解析dex文件的内容，最终将其映射成DexMapList数据结构，这个DexMapList中包含了dex文件中可能出现的所有类型，作用是用于校验。</li>
+<li>剩余部分的xxx_size和xxx_offset字段，通过这些部分我们可以拿到Table Section中的各项数据。</li>
+</ol>
+<h3 id="Table-Section"><a href="#Table-Section" class="headerlink" title="Table Section"></a>Table Section</h3><p>这部分的内容和Header Section是紧密相连的。从DexFile结构体中可以看出一共有6个table(String、Type、Field、Method、Proto和Class)，而Header Section中也正好对应了这6个table的size和offset。所以我们可以通过Header Section里的size和offset以及它们各自所占的大小来精确的定位到每一个table的在dex文件中的位置。各个table的结构如下：</p>
+<p><strong>String Table：</strong>  </p>
+<p>stringDataOff：表示StringData在Data Section中的偏移量，StringData中包含了一个dex文件中的所有字符串资源，比如类名，方法名等等。这个table也将被后面几个table反复的用到。</p>
+<p><strong>Type Table:</strong> </p>
+<p>descriptorIdx：用来索引String Table，得到一个表示类型的字符串，比如方法的返回类型，类类型等。</p>
+<p><strong>Field Table:</strong> </p>
+<p>classIdx：用来索引Type Table，进而通过Type Item得到一个字符串资源用来表示该field所属的类；</p>
+<p>typeIdx：用来索引Type Table，进而得到一个字符串资源用来表示该field的类型；</p>
+<p>nameIdx：用来索引String Table，得到一个字符串资源用来表示该field的名称。</p>
+<p><strong>Method Table:</strong></p>
+<p>classIdx：用来索引Type Table，进而得到一个字符串资源用来表示该method所属的类；</p>
+<p>protoIdx：用来索引Proto Table，从而得到一个method的原型，返回类型和入参类型；</p>
+<p>nameIdx：用来索引String Table，得到一个字符串资源用来表示该method的名称。</p>
+<p><strong>Proto Table:</strong></p>
+<p>shortyIdx：用来索引String Table，得到一个字符串资源表示该method的原型；</p>
+<p>returnTypeIdx：用来索引Type Table，进而得到该method的返回类型；</p>
+<p>parametersOff：用来表示TypeList在Data Section中的偏移量，TypeList中包含了一个方法的所有入参类型。</p>
+<p><strong>ClassDefs Table:</strong></p>
+<p>classIdx：用来索引Type Table，得到一个字符串表示该类的类型；</p>
+<p>accessFlags：用来表示该类的访问权限，如public，private等；</p>
+<p>superclassIdx：用来索引Type Table，得到一个字符串资源用来表示该类的父类的类型；</p>
+<p>interfacesOff：用来表示TypeList(Type Item的集合)在Data Section中的偏移量，TypeList中包含了一个类所含的声明或实现的接口；</p>
+<p>sourceFileIdx：用来索引String Table，得到一个字符串表示该类在文件中的名称；</p>
+<p>annotationsOff：用来表示DexAnnotationsDirectoryItem在Data Section中的偏移量，DexAnnotationsDirectoryItem中包含了该类所有的注解；</p>
+<p>classDataOff：用来表示DexClassData在Data Section中的偏移量，DexClassData用来表示该类的数据；</p>
+<p>staticValuesOff:用来表示DexEncodedArray在Data Section中的偏移量，DexEncodedArray用来表示该类的所有静态数据。</p>
+<h3 id="dex文件的调用"><a href="#dex文件的调用" class="headerlink" title="dex文件的调用"></a>dex文件的调用</h3><p>在art对各个apk进行编译的时候就需要对dex进行解析，编译成可执行的ELF文件。 从对dex的发起实际操作在class_linker.cc里。查找具体的类调用了ClassLinker::ResolveType方法，</p>
+<pre><code>mirror::Class* ClassLinker::ResolveType(...) {
+   ...
+   mirror::Class* resolved = dex_cache-&gt;GetResolvedType(type_idx);
+   if (resolved == nullptr) {
+        ...
+        const char* descriptor = dex_file.StringByTypeIdx(type_idx);
+        resolved = FindClass(self, descriptor, class_loader);
+        ...
+         dex_cache-&gt;SetResolvedType(type_idx, resolved);
+    }     
+    ...
+}
+</code></pre><p>当这个类没被从dex中解析过，就会先通过type_idx 获得这个类的描述，这个type_idx实际就是用来索引Type Table从而得到这个类型的类型字符串。</p>
+<p>对于方法的查找可以查看ClassLinker::ResolveMethod方法，</p>
+<pre><code>ArtMethod* ClassLinker::ResolveMethod(...) {
+    ...
+    ArtMethod* resolved = dex_cache-&gt;GetResolvedMethod(method_idx, image_pointer_size\_);
+    ...
+    const DexFile::MethodId&amp; method_id = dex_file.GetMethodId(method_idx);
+    ...
+    mirror::Class* klass = ResolveType(dex_file, method_id.class_idx_, dex_cache, class_loader);
+    ...
+    const char* name = dex_file.StringDataByIdx(method_id.name_idx_);
+    const Signature signature = dex_file.GetMethodSignature(method_id);
+    switch (type) {
+        ...
+        resolved = klass-&gt;FindDirectMethod(name, signature, image_pointer_size_);
+        ...
+        resolved = klass-&gt;FindInterfaceMethod(name, signature, image_pointer_size_);
+        ...
+        resolved = klass-&gt;FindVirtualMethod(name, signature, image_pointer_size_);
+        break;
+    }
+}
+</code></pre><p>调用该方法后返回一个ArtMethod对象，该对象里记录了要调用方法信息，其中就包括该方法在dex文件中的信息，里面也包括方法的入口指针，篡改该指针可到达热修复的作用，Andfix就是对该对象进行替换实现。</p>
+<p>对于方法的查找，首先会拿到要调用方法的method_id，对应上述的Method Table， 然后根据Method Table中的nameIdx获得方法名，最后通过protoIdx索引到Proto Table拿到方法的输入参数Signature，klass即为方法对应的类。具备了上述参数后就可找到类中对应的方法。</p>
+<p>从上面的分析看出，平时我们的类查找、方法调用或字段调用，都是强烈的依赖dex文件本身的结构。对于想直接通过修改dex文件以达到需求目的，必须把每个细节掌握清楚，否则只能呵呵！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/25/深入理解Java虚拟机——运行时数据区域/" rel="next" title="深入理解Java虚拟机——运行时数据区域">
+                <i class="fa fa-chevron-left"></i> 深入理解Java虚拟机——运行时数据区域
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.jpg"
+                alt="weixiao" />
+            
+              <p class="site-author-name" itemprop="name">weixiao</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#dex文件大致结构"><span class="nav-number">1.</span> <span class="nav-text">dex文件大致结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Header-Section"><span class="nav-number">2.</span> <span class="nav-text">Header Section</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Table-Section"><span class="nav-number">3.</span> <span class="nav-text">Table Section</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dex文件的调用"><span class="nav-number">4.</span> <span class="nav-text">dex文件的调用</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">weixiao</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
