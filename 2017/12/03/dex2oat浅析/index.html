@@ -79,17 +79,17 @@
 
 
 
-<meta name="description" content="1. 运行时数据区域Java 虚拟机在执行java程序过程中会把它所管理的内存划分为若干个不同区域的数据区，根据Java SE7 规范Java虚拟机所管理的内存将包含以下几个运行时数据区域。  程序计数器区 虚拟机栈 本地方法栈 Java堆 方法区  1.1 程序计数器程序计数器是一块较小的内存空间，它可以看作是当前线">
+<meta name="description" content="dex2oat是一个能将dex文件转化成oat文件的工具，它是一个可执行ELF文件，adb连接手机后可直接调用。其源文件路径/art/dex2oat/dex2oat.cc，那么我们apk安装时它时如何被调用的呢？ 当我们安装一个app的时候，实际会跳转到了一个安装界面，即PackageInstaller中的一个Acti">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解Java虚拟机——运行时数据区域">
-<meta property="og:url" content="http://yoursite.com/2017/11/25/深入理解Java虚拟机——运行时数据区域/index.html">
+<meta property="og:title" content="dex2oat浅析">
+<meta property="og:url" content="http://yoursite.com/2017/12/03/dex2oat浅析/index.html">
 <meta property="og:site_name" content="weixiao">
-<meta property="og:description" content="1. 运行时数据区域Java 虚拟机在执行java程序过程中会把它所管理的内存划分为若干个不同区域的数据区，根据Java SE7 规范Java虚拟机所管理的内存将包含以下几个运行时数据区域。  程序计数器区 虚拟机栈 本地方法栈 Java堆 方法区  1.1 程序计数器程序计数器是一块较小的内存空间，它可以看作是当前线程所执行字节码的行号指示器。解释器工作时通过改变这个计数器的值来选取下一条要执行">
+<meta property="og:description" content="dex2oat是一个能将dex文件转化成oat文件的工具，它是一个可执行ELF文件，adb连接手机后可直接调用。其源文件路径/art/dex2oat/dex2oat.cc，那么我们apk安装时它时如何被调用的呢？ 当我们安装一个app的时候，实际会跳转到了一个安装界面，即PackageInstaller中的一个Activity界面 InstallAppProgress，点击确定按钮后开始安装，后续">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-11-25T07:29:40.000Z">
+<meta property="og:updated_time" content="2017-12-03T14:09:51.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解Java虚拟机——运行时数据区域">
-<meta name="twitter:description" content="1. 运行时数据区域Java 虚拟机在执行java程序过程中会把它所管理的内存划分为若干个不同区域的数据区，根据Java SE7 规范Java虚拟机所管理的内存将包含以下几个运行时数据区域。  程序计数器区 虚拟机栈 本地方法栈 Java堆 方法区  1.1 程序计数器程序计数器是一块较小的内存空间，它可以看作是当前线程所执行字节码的行号指示器。解释器工作时通过改变这个计数器的值来选取下一条要执行">
+<meta name="twitter:title" content="dex2oat浅析">
+<meta name="twitter:description" content="dex2oat是一个能将dex文件转化成oat文件的工具，它是一个可执行ELF文件，adb连接手机后可直接调用。其源文件路径/art/dex2oat/dex2oat.cc，那么我们apk安装时它时如何被调用的呢？ 当我们安装一个app的时候，实际会跳转到了一个安装界面，即PackageInstaller中的一个Activity界面 InstallAppProgress，点击确定按钮后开始安装，后续">
 
 
 
@@ -119,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/11/25/深入理解Java虚拟机——运行时数据区域/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/12/03/dex2oat浅析/"/>
 
 
 
 
 
-  <title>深入理解Java虚拟机——运行时数据区域 | weixiao</title>
+  <title>dex2oat浅析 | weixiao</title>
   
 
 
@@ -232,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/25/深入理解Java虚拟机——运行时数据区域/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/03/dex2oat浅析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="weixiao">
@@ -249,7 +249,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">深入理解Java虚拟机——运行时数据区域</h1>
+          <h1 class="post-title" itemprop="name headline">dex2oat浅析</h1>
         
 
         <div class="post-meta">
@@ -261,8 +261,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-25T15:17:31+08:00">
-                2017-11-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-03T22:02:37+08:00">
+                2017-12-03
               </time>
             
 
@@ -299,30 +299,87 @@
       
 
       
-        <h2 id="1-运行时数据区域"><a href="#1-运行时数据区域" class="headerlink" title="1. 运行时数据区域"></a>1. 运行时数据区域</h2><p>Java 虚拟机在执行java程序过程中会把它所管理的内存划分为若干个不同区域的数据区，根据Java SE7 规范Java虚拟机所管理的内存将包含以下几个运行时数据区域。</p>
+        <p>dex2oat是一个能将dex文件转化成oat文件的工具，它是一个可执行ELF文件，adb连接手机后可直接调用。其源文件路径/art/dex2oat/dex2oat.cc，那么我们apk安装时它时如何被调用的呢？</p>
+<p>当我们安装一个app的时候，实际会跳转到了一个安装界面，即PackageInstaller中的一个Activity界面 InstallAppProgress，点击确定按钮后开始安装，后续实际调用的是ApplicationPackageManager中的installPackage方法。</p>
+<p>installCommon中又是调用了PMS的installPackageAsUser进行安装.<br><a id="more"></a></p>
+<pre><code>public void installPackageAsUser(...) {
+    enforceCrossUserPermission(callingUid, userId,
+                true /* requireFullPermission \*/, true /* checkShell */, &quot;installPackageAsUser&quot;);
+    ...
+    final Message msg = mHandler.obtainMessage(INIT_COPY);
+    ...
+    mHandler.sendMessage(msg);
+}
+</code></pre><p>installPackageAsUser中当安装进程是shell或者root时，会打上INSTALL_FROM_ADB标，当具有INSTALL_FROM_ADB和INSTALL_ALL_USERS标时才是安装给所有用户。</p>
+<p>Android6.0后当程序需要运行时权限时，会弹窗提醒用户授权，但系统app却不需要，这是因为系统app中有INSTALL_GRANT_RUNTIME_PERMISSIONS权限，installPackageAsUser中就会检查该权限。</p>
+<p>从installPackageAsUser开始安装大致分三个部分。</p>
 <ul>
-<li>程序计数器区</li>
-<li>虚拟机栈</li>
-<li>本地方法栈</li>
-<li>Java堆</li>
-<li>方法区</li>
+<li>权限检查</li>
+<li>apk复制</li>
+<li>装载应用</li>
 </ul>
-<h3 id="1-1-程序计数器"><a href="#1-1-程序计数器" class="headerlink" title="1.1 程序计数器"></a>1.1 程序计数器</h3><p>程序计数器是一块较小的内存空间，它可以看作是当前线程所执行字节码的行号指示器。解释器工作时通过改变这个计数器的值来选取下一条要执行的字节指令。每条线程都有一个独立的程序计数器，该内存为线程私有内存。<br><a id="more"></a></p>
-<h3 id="1-2-Java虚拟机栈"><a href="#1-2-Java虚拟机栈" class="headerlink" title="1.2 Java虚拟机栈"></a>1.2 Java虚拟机栈</h3><p>Java 虚拟机栈也是线程私有的, 它的生命周期与线程相同。虚拟机栈是Java方法执行的内存模型：每个方法会创建一个栈帧用于存储局部变量表、操作数栈、动态链接、方法出口等信息。一个方法的执行到完成的过程，就对应一个栈帧在虚拟机栈中的入栈和出栈过程。</p>
-<p>平时大家常说的栈大多数时候就是指的这里的虚拟机栈，或者说是虚拟机栈中的局部变量表部分。</p>
-<p>局部变量表存放了编译期可知的各种基本的数据类型、对象引用和returnAddress类型（指向一条字节码指令的地址）。当进入一个方法时，该方法需要在帧中分配多大的局部变量空间是完全确定的，方法运行期间不会改变空间的大小。</p>
-<p>如果线程请求栈深度过大将抛出Stack Overflow异常，如果无法申请到可用内存就会抛出OutOfMemoryError异常。</p>
-<h3 id="1-3-本地方法栈"><a href="#1-3-本地方法栈" class="headerlink" title="1.3 本地方法栈"></a>1.3 本地方法栈</h3><p>本地方法栈和虚拟机栈作用非常类似，区别在于虚拟机栈是为Java方法服务，本地方法栈是为Native方法服务。</p>
-<h3 id="1-4-Java-堆"><a href="#1-4-Java-堆" class="headerlink" title="1.4 Java 堆"></a>1.4 Java 堆</h3><p>Java 堆是所有线程共享的一块内存区域，在虚拟机启动时创建。此内存的唯一目的就是存放对象实例。Java 堆是垃圾收集器管理的主要区域，由于现代的收集器基本都采用了分代收集算法，所以Java堆还可以细分为：Eden空间、From Survivor 空间、 To Survivor 空间等。当堆无法再扩展时会抛出OutOfMemoryError异常。</p>
-<h3 id="1-5-方法区"><a href="#1-5-方法区" class="headerlink" title="1.5 方法区"></a>1.5 方法区</h3><p>方法区与Java堆一样，是各个线程共享的区域，用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码数据。通常人们称这块区域为“永久代(Permanent Generation)”，但并非数据进入该区域就永久存储，只是回收条件较为苛刻。</p>
-<h3 id="1-6-运行时常量池"><a href="#1-6-运行时常量池" class="headerlink" title="1.6 运行时常量池"></a>1.6 运行时常量池</h3><p>该区域是方法区的一部分，用于存储编译期生产的各种字面量和符号，运行时常量池局部动态性，即运行期间允许将新常量放入池中（String类的intern()方法）。</p>
-<h3 id="1-7-直接内存"><a href="#1-7-直接内存" class="headerlink" title="1.7 直接内存"></a>1.7 直接内存</h3><p>直接内存并不是虚拟机运行时数据区的一部分。JDK 1.4中引入了NIO类，引入了一种基于Channel与Buffer的I/O方式，它可以使用Native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作。这样避免了Java堆与Native堆来回复制数据。</p>
-<h3 id="1-8-其他知识点"><a href="#1-8-其他知识点" class="headerlink" title="1.8. 其他知识点"></a>1.8. 其他知识点</h3><p>建立对象是为了使用对象，Java程序需要通过栈上的reference数据来操作堆上的具体对象。由于reference类型在Java虚拟机规范中并没有规定按照什么方式去访问具体对象，目前主流的访问方式有句柄和直接指针两种。</p>
-<ul>
-<li>如果使用句柄，那么Java堆中将会划分出一块内存来作为句柄池，reference中储存的就是对象的句柄地址，而该句柄中就包含了对象的实例数据与类型数据各自的具体地址信息。</li>
-<li>直接指针访问，那么Java 对象中就必须考虑如何访问类型数据的相关信息，而reference直接指向对象。</li>
-</ul>
-<p>这两种方式各有千秋，句柄方式最大好处是reference中存储的是稳定的句柄地址，对象移动时只会改变句柄中的实例数据指针，而reference本身不需要修改。 而直接指针方式最大好处就是快，目前Sun HotSpot就是使用直接指针方式。</p>
+<p>权限检查主要是检查进程是否有权限安装。</p>
+<h3 id="apk复制"><a href="#apk复制" class="headerlink" title="apk复制"></a>apk复制</h3><p>权限检查完后会发起一个INIT_COPY消息，PackageHandler接收该信息并开始处理。在INIT_COPY消息处理的case中，主要是将handler绑定到一个异步线程中，并对安装请求进行排队处理，对应每个安装请求又发送一个MCS_BOUND消息。</p>
+<p>在MCS_BOUND消息的处理case中调用了InstallParams类的startCopy()方法来执行实际的拷贝操作。startCopy()方法通过调用其子类InstallParams的handleStartCopy()来完成拷贝操作。apk被拷贝到临时阶段性文件夹/data/app/vmdl&lt;安装回话id&gt;.tmp/这个目录下。</p>
+<h3 id="装载应用"><a href="#装载应用" class="headerlink" title="装载应用"></a>装载应用</h3><p>当apk拷贝完后startCopy会调用handleReturnCode方法，handleReturnCode 又直接调用了processPendingInstall方法。processPendingInstall中直接post了一个Runnable对象，后续可以进行异步处理。</p>
+<p>在run方法中调用了installPackageTracedLI方法，最终是调用了installPackageLI方法。</p>
+<pre><code>private void installPackageLI(InstallArgs args, PackageInstalledInfo res) {
+    ...
+    pkg = pp.parsePackage(tmpPackageFile, parseFlags);
+    ...
+    mPackageDexOptimizer.performDexOpt(pkg, pkg.usesLibraryFiles,
+                    null /* instructionSets \*/, false /* checkProfiles */,
+                    getCompilerFilterForReason(REASON_INSTALL));
+   ...
+   if (replace) {
+      replacePackageLIF(pkg, parseFlags, scanFlags | SCAN_REPLACING, args.user,
+                        installerPackageName, res);
+   } else {
+      installNewPackageLIF(pkg, parseFlags, scanFlags | SCAN_DELETE_DATA_ON_FAILURES,
+                        args.user, installerPackageName, volumeUuid, res);
+   }
+   ...
+}
+</code></pre><p>在installPackageLI里其实做了很多工作，如pp.parsePackage对apk的manifest进行解析，收集apk签名，覆盖安装的处理，apk中定义权限处理等，最后会调用installNewPackageLI或replacePackageLIF进行安装。</p>
+<h3 id="dex2oat-调用"><a href="#dex2oat-调用" class="headerlink" title="dex2oat 调用"></a>dex2oat 调用</h3><p>我们这里关注的是mPackageDexOptimizer.performDexOpt，这里才开始了正在的dex2oat操作，将apk中的dex文件转换为oat文件，oat文件一般都放在/data/dalvik-cache/目录下。</p>
+<p>PackageDexOptimizer类中的performDexOpt又调用了performDexOptLI方法。performDexOptLI里直接调用了mInstaller.dexopt方法进行转换。Installer的dexopt直接调用了InstallerConnection的dexopt。</p>
+<pre><code>public void dexopt(String apkPath, int uid, String pkgName, String instructionSet,
+            int dexoptNeeded, String outputPath, int dexFlags, String compilerFilter,
+            String volumeUuid, String sharedLibraries) throws InstallerException {
+        execute(&quot;dexopt&quot;,
+                apkPath,
+                uid,
+                pkgName,
+                instructionSet,
+                dexoptNeeded,
+                outputPath,
+                dexFlags,
+                compilerFilter,
+                volumeUuid,
+                sharedLibraries);
+    }
+</code></pre><p>里面将”dexopt”作为参数调用了execute，execute会将传入的参数组装成一个命令字符串cmd，最终通过socekt的方式传给了Socekt服务端installd.cpp。installd.cpp里会死循环等待这个链接，一旦有链接接入，就会执行传过来的命令字符串。</p>
+<p>在installd.cpp的execute函数中会通过一个映射方式将传入的命令字符串与对应的函数对应起来，前面出入的dexopt就对应着do_dexopt函数。</p>
+<pre><code>struct cmdinfo cmds[] = {
+    { &quot;ping&quot;,                 0, do_ping },
+    ...
+    { &quot;dexopt&quot;,              10, do_dexopt },
+   ...
+    { &quot;dump_profiles&quot;,        3, do_dump_profiles },
+};
+</code></pre><p>do_dexopt函数直接调用了commands.cpp的dexopt函数，该dexopt函数会fork一个子线程，在子线程里又调用了run_dex2oat函数进行oat编译。</p>
+<pre><code>static void run_dex2oat(...) {
+    ...
+    static const char* DEX2OAT_BIN = &quot;/system/bin/dex2oat&quot;;
+    ...
+    int i = 0;
+    argv[i++] = DEX2OAT_BIN;
+    ...
+    execv(DEX2OAT_BIN, (char * const *)argv);
+    ...
+}
+</code></pre><p>在run_dex2oat里最终通过execv函数执行命令调用了dex2oat工具进行oat转换。</p>
+<p>整个dex2oat的调用过程就是上面这样了~~</p>
 
       
     </div>
@@ -347,15 +404,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2017/12/02/Dex-文件浅析/" rel="next" title="Dex 文件浅析">
+                <i class="fa fa-chevron-left"></i> Dex 文件浅析
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/12/02/Dex-文件浅析/" rel="prev" title="Dex 文件浅析">
-                Dex 文件浅析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -475,7 +532,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-运行时数据区域"><span class="nav-number">1.</span> <span class="nav-text">1. 运行时数据区域</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-程序计数器"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 程序计数器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-Java虚拟机栈"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 Java虚拟机栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-本地方法栈"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 本地方法栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-Java-堆"><span class="nav-number">1.4.</span> <span class="nav-text">1.4 Java 堆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-5-方法区"><span class="nav-number">1.5.</span> <span class="nav-text">1.5 方法区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-6-运行时常量池"><span class="nav-number">1.6.</span> <span class="nav-text">1.6 运行时常量池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-7-直接内存"><span class="nav-number">1.7.</span> <span class="nav-text">1.7 直接内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-8-其他知识点"><span class="nav-number">1.8.</span> <span class="nav-text">1.8. 其他知识点</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#apk复制"><span class="nav-number">1.</span> <span class="nav-text">apk复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#装载应用"><span class="nav-number">2.</span> <span class="nav-text">装载应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dex2oat-调用"><span class="nav-number">3.</span> <span class="nav-text">dex2oat 调用</span></a></li></ol></div>
             
 
           </div>
