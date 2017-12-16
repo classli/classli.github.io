@@ -1,0 +1,12 @@
+---
+title: Android资源加载大致流程
+date: 2017-12-16 18:23:42
+tags:
+---
+资源加载的大致流程如下：
+
+首先在Java层，如果通过资源Id的形式去获取资源，那么就会调用Resource类中的同名方法，如getDrawable等方法，而Resource类中所有资源的查找都会先调用getValue方法，该方法通过资源id查找到对应的资源以后将其赋值到一个TypedValue对象中，然后通过对应的load方法(如drawable就是loadDrawable)去加载资源。
+
+而在getValue内部则是调用了AssetManager的getResourceValue方法。这个方法最终调用一个native方法loadResourceValue去寻找资源。
+
+loadResourceValue中先获取一个ResTable，再通过ResTable的getResource去获取资源。getResource中会通过资源Id分别获取对应的Package，Type和Entry。然后通过getEntry去获取具体的资源。在getEntry中又回去遍历一个TypeList对象，通过比较不同的Config获取最合适的资源。
