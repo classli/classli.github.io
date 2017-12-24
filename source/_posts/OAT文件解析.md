@@ -4,19 +4,89 @@ date: 2017-12-17 16:01:28
 tags:
 ---
 
-在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/data/dalvik-cache/arm下，会有一个data@app@[package name]-1@base.apk@classes.dex的文件，虽然这个文件的后缀是.dex，这个它确实就是我们要找的oat文件，我们可以使用dump命令去把它dump出来，具体的命令如下：
+在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/data/dalvik-cache/arm或者arm64下，会有一个data@app@[package name]-1@base.apk@classes.dex的文件，虽然这个文件的后缀是.dex，这个它确实就是我们要找的oat文件，我们可以使用dump命令去把它dump出来，具体的命令如下：
 
-oatdump --file-name=data@app@[package name]-1@base.apk@classes.dex －－output=dump.txt
+oatdump --oat-file=data@app@[package name]-1@base.apk@classes.dex －－output=dump.txt
 
 然后就可以使用adb pull把对应的dump.txt拉取到你想到存放的路径下了。
 <!-- more -->
 oat文件的头部包括：
 
+	MAGIC:
+	oat
+	045
+	
+	CHECKSUM:
+	0xc5344e7d
+	
+	INSTRUCTION SET:
+	Arm64
+	
+	INSTRUCTION SET FEATURES:
+	none
+	
+	DEX FILE COUNT:
+	2
+	
+	EXECUTABLE OFFSET:
+	0x00017000
+	
+	INTERPRETER TO INTERPRETER BRIDGE OFFSET:
+	0x00000000
+	
+	INTERPRETER TO COMPILED CODE BRIDGE OFFSET:
+	0x00000000
+	
+	JNI DLSYM LOOKUP OFFSET:
+	0x00000000
+	
+	PORTABLE IMT CONFLICT TRAMPOLINE OFFSET:
+	0x00000000
+	
+	PORTABLE RESOLUTION TRAMPOLINE OFFSET:
+	0x00000000
+	
+	PORTABLE TO INTERPRETER BRIDGE OFFSET:
+	0x00000000
+	
+	QUICK GENERIC JNI TRAMPOLINE OFFSET:
+	0x00000000
+	
+	QUICK IMT CONFLICT TRAMPOLINE OFFSET:
+	0x00000000
+	
+	QUICK RESOLUTION TRAMPOLINE OFFSET:
+	0x00000000
+	
+	QUICK TO INTERPRETER BRIDGE OFFSET:
+	0x00000000
+	
+	IMAGE PATCH DELTA:
+	0 (0x00000000)
+	
+	IMAGE FILE LOCATION OAT CHECKSUM:
+	0x4ebc29b0
+	
+	IMAGE FILE LOCATION OAT BEGIN:
+	0x70db1000
+	
+	KEY VALUE STORE:
+	dex2oat-cmdline = --zip-fd=11 --zip-location=/data/app/com.sven.myapplication-1/base.apk --oat-fd=12 --oat-location=/data/dalvik-cache/arm64/data@app@com.sven.myapplication-1@base.apk@classes.dex --instruction-set=arm64 --instruction-set-features=default --runtime-arg -Xms64m --runtime-arg -Xmx512m --swap-fd=13
+	dex2oat-host = Arm
+	image-location = /data/dalvik-cache/arm64/system@framework@boot.art
+	pic = false
+	
+	SIZE:
+	198956
+	
+	OatDexFile:
+	.....
+	
 MAGIC表示魔数，和java文件的魔术是一个道理。
 
 CHECKSUM表示校验和，这个也很好理解。
 
-INSTRUCTION SET表示指令集，一个有四个选项，在arm机器中就是Thumb2。
+INSTRUCTION SET表示指令集。
 
 INSTRUCTION SET FEATURES表示指令集功能。
 
