@@ -79,17 +79,17 @@
 
 
 
-<meta name="description" content="在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/d">
+<meta name="description" content="startServicestartService真正实现者是ContextImpl，ContextImpl类的startService开始，然后进入本类的startServiceCommon方法，最终调用ActivityManagerNative.getDefault()对象的startService方法。Activi">
 <meta property="og:type" content="article">
-<meta property="og:title" content="OAT文件解析">
-<meta property="og:url" content="http://yoursite.com/2017/12/17/OAT文件解析/index.html">
+<meta property="og:title" content="Android Service 启动">
+<meta property="og:url" content="http://yoursite.com/2017/12/24/Android-Service-启动/index.html">
 <meta property="og:site_name" content="weixiao">
-<meta property="og:description" content="在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/d">
+<meta property="og:description" content="startServicestartService真正实现者是ContextImpl，ContextImpl类的startService开始，然后进入本类的startServiceCommon方法，最终调用ActivityManagerNative.getDefault()对象的startService方法。ActivityManagerNative.getDefault()就是ActivityMa">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-12-18T14:57:40.000Z">
+<meta property="og:updated_time" content="2017-12-24T09:44:18.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="OAT文件解析">
-<meta name="twitter:description" content="在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/d">
+<meta name="twitter:title" content="Android Service 启动">
+<meta name="twitter:description" content="startServicestartService真正实现者是ContextImpl，ContextImpl类的startService开始，然后进入本类的startServiceCommon方法，最终调用ActivityManagerNative.getDefault()对象的startService方法。ActivityManagerNative.getDefault()就是ActivityMa">
 
 
 
@@ -119,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/12/17/OAT文件解析/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/12/24/Android-Service-启动/"/>
 
 
 
 
 
-  <title>OAT文件解析 | weixiao</title>
+  <title>Android Service 启动 | weixiao</title>
   
 
 
@@ -232,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/17/OAT文件解析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/24/Android-Service-启动/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="weixiao">
@@ -249,7 +249,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">OAT文件解析</h1>
+          <h1 class="post-title" itemprop="name headline">Android Service 启动</h1>
         
 
         <div class="post-meta">
@@ -261,8 +261,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-17T16:01:28+08:00">
-                2017-12-17
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-24T16:55:25+08:00">
+                2017-12-24
               </time>
             
 
@@ -299,89 +299,18 @@
       
 
       
-        <p>在ART虚拟机上，当应用首次安装或者动态地通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/data/dalvik-cache/arm或者arm64下，会有一个data@app@[package name]-1@base.apk@classes.dex的文件，虽然这个文件的后缀是.dex，这个它确实就是我们要找的oat文件，我们可以使用dump命令去把它dump出来，具体的命令如下：</p>
-<p>oatdump –oat-file=data@app@[package name]-1@base.apk@classes.dex －－output=dump.txt</p>
-<p>然后就可以使用adb pull把对应的dump.txt拉取到你想到存放的路径下了。<br><a id="more"></a><br>oat文件的头部包括：</p>
-<pre><code>MAGIC:
-oat
-045
-
-CHECKSUM:
-0xc5344e7d
-
-INSTRUCTION SET:
-Arm64
-
-INSTRUCTION SET FEATURES:
-none
-
-DEX FILE COUNT:
-2
-
-EXECUTABLE OFFSET:
-0x00017000
-
-INTERPRETER TO INTERPRETER BRIDGE OFFSET:
-0x00000000
-
-INTERPRETER TO COMPILED CODE BRIDGE OFFSET:
-0x00000000
-
-JNI DLSYM LOOKUP OFFSET:
-0x00000000
-
-PORTABLE IMT CONFLICT TRAMPOLINE OFFSET:
-0x00000000
-
-PORTABLE RESOLUTION TRAMPOLINE OFFSET:
-0x00000000
-
-PORTABLE TO INTERPRETER BRIDGE OFFSET:
-0x00000000
-
-QUICK GENERIC JNI TRAMPOLINE OFFSET:
-0x00000000
-
-QUICK IMT CONFLICT TRAMPOLINE OFFSET:
-0x00000000
-
-QUICK RESOLUTION TRAMPOLINE OFFSET:
-0x00000000
-
-QUICK TO INTERPRETER BRIDGE OFFSET:
-0x00000000
-
-IMAGE PATCH DELTA:
-0 (0x00000000)
-
-IMAGE FILE LOCATION OAT CHECKSUM:
-0x4ebc29b0
-
-IMAGE FILE LOCATION OAT BEGIN:
-0x70db1000
-
-KEY VALUE STORE:
-dex2oat-cmdline = --zip-fd=11 --zip-location=/data/app/com.sven.myapplication-1/base.apk --oat-fd=12 --oat-location=/data/dalvik-cache/arm64/data@app@com.sven.myapplication-1@base.apk@classes.dex --instruction-set=arm64 --instruction-set-features=default --runtime-arg -Xms64m --runtime-arg -Xmx512m --swap-fd=13
-dex2oat-host = Arm
-image-location = /data/dalvik-cache/arm64/system@framework@boot.art
-pic = false
-
-SIZE:
-198956
-
-OatDexFile:
-.....
-</code></pre><p>MAGIC表示魔数，和java文件的魔术是一个道理。</p>
-<p>CHECKSUM表示校验和，这个也很好理解。</p>
-<p>INSTRUCTION SET表示指令集。</p>
-<p>INSTRUCTION SET FEATURES表示指令集功能。</p>
-<p>DEX FILE COUNT表示oat文件中的dex文件个数。我们知道oat文件包含着两部分——oat data和oat exec。其中oat data里就有被转换的dex文件，而oat exec中有所转换好的native code。</p>
-<p>EXECUTABLE OFFSET表示oat exec段的偏移量，也就是oat data和oat exec分隔的地方。</p>
-<p>后面的几个字段都表示ARM虚拟机下的Trampoline机制，可以通过Trampoline从native code跳回到ART虚拟机内。</p>
-<p>最后看一下KEY VALUE STORE的值。其中–zip-location表示对应apk文件的路径。–oat-location表示生成的oat文件的路径。image-location表示image文件的路径，具体路径是/data/dalvik-cache/arm/system@framework@boot.art，可以把它看成一个特殊的oat文件，里面包含着android系统的dex和对应的native code，所以取名boot，它的作用基本就是用来缓存，预先编译好framework的代码。在这之后，就是dex文件的内容和对应的native code了。</p>
-<p>在ART虚拟机中，一个方法会有两个入口，分别是EntryPointFromInterpreter和EntryPointFromCompiledCode，通过对应的setter去设置。虽然ART虚拟机会有AOT操作，但是我们还是可以手动开启解释器模式，另外一些代码可能没有native code，在这样的情况下，ART就需要使用原来dalvik的那部分逻辑，使用解释模式运行，所以现在就存在四种情况：</p>
-<p>解释器-&gt;native code，解释器-&gt;解释器，native code-&gt;解释器，native code-&gt;native code。</p>
-<p>所以每个方法就需要两个入口，保证解释器和native code都可以调用成功。</p>
+        <h3 id="startService"><a href="#startService" class="headerlink" title="startService"></a>startService</h3><p>startService真正实现者是ContextImpl，ContextImpl类的startService开始，然后进入本类的startServiceCommon方法，最终调用ActivityManagerNative.getDefault()对象的startService方法。ActivityManagerNative.getDefault()就是ActivityManagerProxy对象。</p>
+<p>ActivityManagerProxy的startService方法通过binder 调用了ActivityManagerService服务的startService方法，里面又调用了 ActiveServices的startServiceLocked方法。startServiceLocked对传入的intent进行了解析 检测权限等操作。<br><a id="more"></a><br>后续会调用到bringUpServiceLocked方法，如果Service的进程已经存在 则直接调用ActivityThread 的 scheduleCreateService进行启动，如果不存在则调用ActivityManagerService.startProcessLocked方法来启动新进程，startProcessLocked会调用ActivityThread.main()方法，经过一些列的binder调用（从ActivityThread到ActivityThread，后又回到ApplicationThread）最后到scheduleCreateService。</p>
+<p>scheduleServiceArgs会发handler通知，handleCreateService会对这个通知进行处理进行实际的Service创建。</p>
+<h3 id="bindService"><a href="#bindService" class="headerlink" title="bindService"></a>bindService</h3><p>ContextImpl中的bindService方法直接调用了bindServiceCommon。方法最终通过ActivityManagerNative借助AMS进而完成Service的绑定过程。该方法里面有个IServiceConnection类型变量，这个IServiceConnection与IApplicationThread以及IIntentReceiver相同，都是ActivityThread给AMS提供的用来与之进行通信的Binder对象。</p>
+<p>这个方法最终调用了ActivityManagerNative的bindService, bindService这个方法相当简单，只是做了一些参数校检之后直接调用了ActivityServices类的bindServiceLocked方法。</p>
+<p>该方法首先它通过retrieveServiceLocked方法获取到了intent匹配到的需要bind到的Service组件res；然后把ActivityThread传递过来的IServiceConnection使用ConnectionRecord进行了包装，方便接下来使用；最后如果启动的FLAG为BIND_AUTO_CREATE，那么调用bringUpServiceLocked开始创建Service。</p>
+<p>如果Service所在的进程已经启动，那么直接调用realStartServiceLocked方法来真正启动Service组件；如果Service所在的进程还没有启动，那么先在AMS中记下这个要启动的Service组件，然后通过startProcessLocked启动新的进程。</p>
+<p>这个方法首先调用了app.thread的scheduleCreateService方法，我们知道，这是一个IApplicationThread对象，它是App所在进程提供给AMS的用来与App进程进行通信的Binder对象，这个Binder的Server端在ActivityThread的ApplicationThread类，因此，我们跟踪ActivityThread类.</p>
+<p>ApplicationThread的scheduleCreateService 方法发了一个消息给ActivityThread的H这个Handler，H类收到这个消息之后，直接调用了ActivityThread类的handleCreateService方法。</p>
+<p>这里Service类的创建过程与Activity是略微有点不同的，虽然都是通过ClassLoader通过反射创建，但是Activity却把创建过程委托给了Instrumentation类，而Service则是直接进行。</p>
+<p>现在ActivityThread里面的handleCreateService方法成功创建出了Service对象，并且调用了它的onCreate方法。回到了AMS进程的realStartServiceLocked方法，在scheduleCreateService调用结束后有个requestServiceBindingsLocked，这里面调用了ApplicationThread的scheduleBindService方法,后面套路一样，handleBindService对service的onBind处理完后调用了AMS的publishService，这个方法简单地调用了publishServiceLocked方法。</p>
+<p>在bindServiceLocked方法里面，我们把这个IServiceConnection放到了一个ConnectionRecord的List中存放在ServiceRecord里面，这里所做的就是取出已经被Bind的这个Service对应的IServiceConnection对象，然后调用它的connected方法；我们说过，这个IServiceConnection也是一个Binder对象，它的Server端在LoadedApk.ServiceDispatcher里面。代码到这里已经很明确了LoadedApk.ServiceDispatcher的connected方法完成ServiceConnection回调过程。</p>
 
       
     </div>
@@ -406,8 +335,8 @@ OatDexFile:
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/16/Android资源加载大致流程/" rel="next" title="Android资源加载大致流程">
-                <i class="fa fa-chevron-left"></i> Android资源加载大致流程
+              <a href="/2017/12/17/Android-系统启动和应用启动/" rel="next" title="Android 系统启动和应用启动">
+                <i class="fa fa-chevron-left"></i> Android 系统启动和应用启动
               </a>
             
           </div>
@@ -415,10 +344,6 @@ OatDexFile:
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/12/17/Android-系统启动和应用启动/" rel="prev" title="Android 系统启动和应用启动">
-                Android 系统启动和应用启动 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -470,8 +395,17 @@ OatDexFile:
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -519,6 +453,22 @@ OatDexFile:
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#startService"><span class="nav-number">1.</span> <span class="nav-text">startService</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bindService"><span class="nav-number">2.</span> <span class="nav-text">bindService</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
