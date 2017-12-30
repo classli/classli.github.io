@@ -1,0 +1,34 @@
+---
+title: BroadcastReceiver
+date: 2017-12-30 13:25:54
+tags:
+---
+### 动态广播注册
+
+BroadcastReceiver的注册也通过在ContextImpl里调用AMS完成的。AMS类的registerReceiver方法主要做了以下两件事：
+
+1. 对发送者的身份和权限做出一定的校检。
+
+2. 把这个BroadcastReceiver以BroadcastFilter的形式存储在AMS的mReceiverResolver变量中，供后续使用。
+
+这样被传递过来的BroadcastReceiver已经成功地注册在系统之中，能够接收特定类型的广播了；那么注册在AndroidManifest.xml中的静态广播是如何被系统感知的呢？
+<!-- more -->
+
+系统会通过PackageParser解析Apk中的AndroidManifest.xml文件，系统会在解析AndroidMafest.xml的<receiver>标签（也即静态注册的广播）的时候保存相应的信息；而Apk的解析过程是在PMS中进行的，因此静态注册广播的信息存储在PMS中。
+
+### 广播发送
+
+发送广播也是通过AMS的broadcastIntent进行的，某个广播被发送之后，AMS会找出所有注册过的BroadcastReceiver中与这个广播匹配的接收者，然后将这个广播分发给相应的接收者处理。在broadcastIntentLocked方法中有两个列表receivers和registeredReceivers：
+
+1. receivers是对这个广播感兴趣的静态BroadcastReceiver列表；collectReceiverComponents 通过PackageManager获取了与这个广播匹配的静态BroadcastReceiver信息。
+2. mReceiverResolver存储了动态注册的BroadcastReceiver的信息；还记得这个mReceiverResolver吗？动态广播的注册过程中，动态注册的BroadcastReceiver的相关信息最终存储在此对象之中；在这里，通过mReceiverResolver对象匹配出了对应的BroadcastReceiver供进一步使用。
+
+### 广播接收
+
+通过上文的分析过程我们知道，在AMS的broadcastIntentLocked方法中找出了符合要求的所有BroadcastReceiver，接下来就需要把这个广播分发到这些接收者之中。
+
+首先创建了一个BroadcastRecord代表此次发送的这条广播，然后把它丢进一个队列，最后通过scheduleBroadcastsLocked通知队列对广播进行处理。在BroadcastQueue中通过Handle调度了对于广播处理的消息，调度过程由processNextBroadcast方法完成，而这个方法通过performReceiveLocked最终调用了IIntentReceiver的performReceive方法。
+
+这个IIntentReceiver正是在广播注册过程中由App进程提供给AMS进程的Binder对象，现在AMS通过这个Binder对象进行IPC调用通知广播接受者所在进程完成余下操作。这个IItentReceiver的实现是LoadedApk.ReceiverDispatcher。
+
+LoadedApk.ReceiverDispatcher的performReceive方法会向ActivityThread的mH发送一个post消息，此时切换到广播接收者所在进程的主线程来执行任务。这个任务就是执行PendingResult里的run方法，这个run里面就调用了onReceive。
