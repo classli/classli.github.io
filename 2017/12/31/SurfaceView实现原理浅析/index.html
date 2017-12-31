@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="SurfaceView拥有独立的绘图表面，因此SurfaceView的UI就可以在一个独立的线程中进行绘制，SurfaceView的UI是绘制在SurfaceFlinger服务中的另外一个Layer或者LayerBuffer上的。 SurfaceView的绘图表面的创建过程当一个窗口需要刷新UI时，就会调用ViewRo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SurfaceView实现原理浅析">
+<meta property="og:url" content="http://yoursite.com/2017/12/31/SurfaceView实现原理浅析/index.html">
+<meta property="og:site_name" content="weixiao">
+<meta property="og:description" content="SurfaceView拥有独立的绘图表面，因此SurfaceView的UI就可以在一个独立的线程中进行绘制，SurfaceView的UI是绘制在SurfaceFlinger服务中的另外一个Layer或者LayerBuffer上的。 SurfaceView的绘图表面的创建过程当一个窗口需要刷新UI时，就会调用ViewRoot类的成员函数performTraversals，performTravers">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T06:51:25.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SurfaceView实现原理浅析">
+<meta name="twitter:description" content="SurfaceView拥有独立的绘图表面，因此SurfaceView的UI就可以在一个独立的线程中进行绘制，SurfaceView的UI是绘制在SurfaceFlinger服务中的另外一个Layer或者LayerBuffer上的。 SurfaceView的绘图表面的创建过程当一个窗口需要刷新UI时，就会调用ViewRoot类的成员函数performTraversals，performTravers">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/31/SurfaceView实现原理浅析/"/>
+
+
+
+
+
+  <title>SurfaceView实现原理浅析 | weixiao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">weixiao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/31/SurfaceView实现原理浅析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="weixiao">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="weixiao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">SurfaceView实现原理浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-31T14:08:02+08:00">
+                2017-12-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>SurfaceView拥有独立的绘图表面，因此SurfaceView的UI就可以在一个独立的线程中进行绘制，SurfaceView的UI是绘制在SurfaceFlinger服务中的另外一个Layer或者LayerBuffer上的。</p>
+<h3 id="SurfaceView的绘图表面的创建过程"><a href="#SurfaceView的绘图表面的创建过程" class="headerlink" title="SurfaceView的绘图表面的创建过程"></a>SurfaceView的绘图表面的创建过程</h3><p>当一个窗口需要刷新UI时，就会调用ViewRoot类的成员函数performTraversals，performTraversals在执行的过程中，如果发现当前窗口的绘图表面还没有创建，或者发现当前窗口的绘图表面已经失效了，那么就会请求WindowManagerService服务创建一个新的绘图表面，同时，它还会通过一系列的回调函数来让嵌入在窗口里面的SurfaceView有机会创建自己的绘图表面。<br><a id="more"></a></p>
+<pre><code>public final class ViewRootImpl implements ViewParent,
+        View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
+    private void performTraversals() {
+        ...
+        if (mFirst) {
+            ...
+            host.dispatchAttachedToWindow(mAttachInfo, 0);
+            ...
+        }
+        ...
+        if (viewVisibilityChanged) {
+            ...
+            host.dispatchWindowVisibilityChanged(viewVisibility);
+            ...
+        }        
+    }        
+
+}
+</code></pre><p>如上，第一次刷新UI时会通过调用DecorView类的dispatchAttachedToWindow，从顶层视图开始通知子视图添加到宿主窗口上去。如果当前窗口的可见性发生了变化，会通过调用DecorView类的dispatchWindowVisibilityChanged，从顶层视图开始通知子视图宿主窗口的可见发生变化了。</p>
+<p>在宿主窗口类中，只是将这些通知信息派发给了子视图，具体处理由子视图实现。SurfaceView类的dispatchAttachedToWindow从父view中继承下来，该方法里面又调用了onAttachedToWindow方法进行具体实现。</p>
+<pre><code>public class SurfaceView extends View {
+     @Override
+        protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mParent.requestTransparentRegion(this);
+        mSession = getWindowSession();
+        mLayout.token = getWindowToken();
+        mLayout.setTitle(&quot;SurfaceView - &quot; + getViewRootImpl().getTitle());
+        mLayout.packageName = mContext.getOpPackageName();
+        mViewVisibility = getVisibility() == VISIBLE;
+
+        if (!mGlobalListenersAdded) {
+            ViewTreeObserver observer = getViewTreeObserver();
+            observer.addOnScrollChangedListener(mScrollChangedListener);
+            observer.addOnPreDrawListener(mDrawListener);
+            mGlobalListenersAdded = true;
+        }
+    }
+}
+</code></pre><p>该方法的第一件事就是通过requestTransparentRegion通知父视图(宿主视图),在父视图设置一个透明窗口，因为SurfaceView其实是在父视图的下面，所以需要在父视图上设置透明部分以显示下面的SurfaceView。</p>
+<p>然后调用getWindowSession获得一个Binder对象，该Binder主要是与WindowManagerService通信。</p>
+<p>dispatchWindowVisibilityChanged与上面的dispatchAttachedToWindow调用路径相似。</p>
+<p>SurfaceView的窗口默认类型为TYPE_APPLICATION_MEDIA，如显示视频，另外一个SurfaceView的窗口类型为TYPE_APPLICATION_MEDIA_OVERLAY，这个Overlay可以用来显示视字幕等信息。</p>
+<p>SurfaceView的绘图表面的类型可能等于SURFACE_TYPE_NORMAL, 也可能等于SURFACE_TYPE_PUSH_BUFFERS，SURFACE_TYPE_NORMAL时, 表面该SurfaceView绘图面使用的内存是一块普通的内存，由SurfaceFlinger服务分配来，我们可以对该内存进行正常操作。等于SURFACE_TYPE_PUSH_BUFFERS时，绘图面的内存不是由SURFACE_TYPE_PUSH_BUFFERS分配，此时我们不能对该内存进行操作，如SurfaceView显示摄像头预览视频播放时。我们可以调用SurfaceHolder的setType来改变这个绘图面类型。</p>
+<h3 id="SurfaceView的绘制过程"><a href="#SurfaceView的绘制过程" class="headerlink" title="SurfaceView的绘制过程"></a>SurfaceView的绘制过程</h3><p>窗口在绘制的过程中，每一个子视图的成员函数draw或者dispatchDraw都会被调用到，以便它们可以绘制自己的UI。</p>
+<pre><code>public class SurfaceView extends View {
+    @Override
+    public void draw(Canvas canvas) {
+        if (mWindowType != WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
+            // draw() is not called when SKIP_DRAW is set
+            if ((mPrivateFlags &amp; PFLAG_SKIP_DRAW) == 0) {
+                // punch a whole in the view-hierarchy below us
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            }
+        }
+        super.draw(canvas);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (mWindowType != WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
+            // if SKIP_DRAW is cleared, draw() has already punched a hole
+            if ((mPrivateFlags &amp; PFLAG_SKIP_DRAW) == PFLAG_SKIP_DRAW) {
+                // punch a whole in the view-hierarchy below us
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            }
+        }
+        super.dispatchDraw(canvas);
+    }
+}
+</code></pre><p>从SurfaceView中的这两个方法可以看出，当前正在处理的SurfaceView不是用作宿主窗口面板的时，SurfaceView会将其所在的区域绘制成黑色。SurfaceView在其宿主窗口的绘图表面上面所做的操作就是将自己所占据的区域绘为黑色。</p>
+<p>在一个绘图表面进行UI绘制，基本顺序如下：</p>
+<ol>
+<li>在绘图表面的基础上建立一块画布，即获得一个Canvas对象。</li>
+<li>利用Canvas类提供的绘图接口在前面获得的画布上绘制任意的UI。</li>
+<li>将已填充好UI数据的画布缓冲区提交给SurfaceFlinger服务，以便SurfaceFlinger服务可以将它合成到屏幕上去。</li>
+</ol>
+<p>SurfaceHolder接口可以执行上述的第1和第3操作。</p>
+<pre><code>SurfaceView sv = (SurfaceView )findViewById(R.id.surface_view);  
+
+SurfaceHolder sh = sv.getHolder();  
+
+Cavas canvas = sh.lockCanvas()  
+
+//Draw something on canvas  
+......  
+
+sh.unlockCanvasAndPost(canvas); 
+</code></pre><p>上述代码理论上最好在子线程里执行。其中getHolder只是将SurfaceHolder对象返回给了调用者。lockCanvas会直接调用internalLockCanvas方法。</p>
+<pre><code>public class SurfaceView extends View {
+     mSurfaceLock.lock();
+     ....
+     if (!mDrawingStopped &amp;&amp; mWindow != null) {
+            try {
+                c = mSurface.lockCanvas(dirty);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, &quot;Exception locking surface&quot;, e);
+            }
+        }
+    ....
+    if (c != null) {
+            mLastLockTime = SystemClock.uptimeMillis();
+            return c;
+        }
+     ....
+     mSurfaceLock.unlock();
+}
+</code></pre><p>由于创建的画布不是线程安全的所以对其进行了加锁处理，mWindow表示绘图面，最终是调用Surface对象的成员函数lockCanvas来创建一块画布。</p>
+<p>Surface的lockCanvas大致就是通过JNI方法来在当前正在处理的绘图表面上获得一个图形缓冲区，并且将这个图形绘冲区封装在一块类型为Canvas的画布中返回给调用者使用。</p>
+<p>绘图者在Canvas画布上绘制后，就调用unlockCanvasAndPost将这块画布的数据交给SurfaceFlinger服务来处理，在该方法中会调用Surface对象的unlockCanvasAndPost提交数据给SurfaceFlinger，并同时unlock画布。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/30/深入理解Java虚拟机—-垃圾回收/" rel="next" title="深入理解Java虚拟机——垃圾回收">
+                <i class="fa fa-chevron-left"></i> 深入理解Java虚拟机——垃圾回收
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.jpg"
+                alt="weixiao" />
+            
+              <p class="site-author-name" itemprop="name">weixiao</p>
+              <p class="site-description motion-element" itemprop="description">未知的未，知晓的晓</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SurfaceView的绘图表面的创建过程"><span class="nav-number">1.</span> <span class="nav-text">SurfaceView的绘图表面的创建过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SurfaceView的绘制过程"><span class="nav-number">2.</span> <span class="nav-text">SurfaceView的绘制过程</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">weixiao</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
