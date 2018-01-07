@@ -79,17 +79,17 @@
 
 
 
-<meta name="description" content="动态广播注册BroadcastReceiver的注册也通过在ContextImpl里调用AMS完成的。AMS类的registerReceiver方法主要做了以下两件事：  对发送者的身份和权限做出一定的校检。  把这个BroadcastReceiver以BroadcastFilter的形式存储在AMS的mReceive">
+<meta name="description" content="在Android世界里夸进程传输主要靠的就是Binder, 但单纯使用Binder是很难一次性传输大量数据，实际只有1M的缓存区。而作为Android系统数据共享的另一种方式ContentProvider，采用了匿名共享内存(Ashmem)机制完成数据共享，它可以方便地完成大量数据的传递。 ContentResolve">
 <meta property="og:type" content="article">
-<meta property="og:title" content="BroadcastReceiver">
-<meta property="og:url" content="http://yoursite.com/2017/12/30/BroadcastReceiver/index.html">
+<meta property="og:title" content="ContentProvider原理浅析">
+<meta property="og:url" content="http://yoursite.com/2018/01/07/ContentProvider原理浅析/index.html">
 <meta property="og:site_name" content="weixiao">
-<meta property="og:description" content="动态广播注册BroadcastReceiver的注册也通过在ContextImpl里调用AMS完成的。AMS类的registerReceiver方法主要做了以下两件事：  对发送者的身份和权限做出一定的校检。  把这个BroadcastReceiver以BroadcastFilter的形式存储在AMS的mReceiverResolver变量中，供后续使用。   这样被传递过来的BroadcastR">
+<meta property="og:description" content="在Android世界里夸进程传输主要靠的就是Binder, 但单纯使用Binder是很难一次性传输大量数据，实际只有1M的缓存区。而作为Android系统数据共享的另一种方式ContentProvider，采用了匿名共享内存(Ashmem)机制完成数据共享，它可以方便地完成大量数据的传递。 ContentResolver的获取通常我们通过getContentResolver获得ContentRes">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-12-30T06:09:42.000Z">
+<meta property="og:updated_time" content="2018-01-07T10:11:26.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="BroadcastReceiver">
-<meta name="twitter:description" content="动态广播注册BroadcastReceiver的注册也通过在ContextImpl里调用AMS完成的。AMS类的registerReceiver方法主要做了以下两件事：  对发送者的身份和权限做出一定的校检。  把这个BroadcastReceiver以BroadcastFilter的形式存储在AMS的mReceiverResolver变量中，供后续使用。   这样被传递过来的BroadcastR">
+<meta name="twitter:title" content="ContentProvider原理浅析">
+<meta name="twitter:description" content="在Android世界里夸进程传输主要靠的就是Binder, 但单纯使用Binder是很难一次性传输大量数据，实际只有1M的缓存区。而作为Android系统数据共享的另一种方式ContentProvider，采用了匿名共享内存(Ashmem)机制完成数据共享，它可以方便地完成大量数据的传递。 ContentResolver的获取通常我们通过getContentResolver获得ContentRes">
 
 
 
@@ -119,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/12/30/BroadcastReceiver/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/01/07/ContentProvider原理浅析/"/>
 
 
 
 
 
-  <title>BroadcastReceiver | weixiao</title>
+  <title>ContentProvider原理浅析 | weixiao</title>
   
 
 
@@ -232,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/30/BroadcastReceiver/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/07/ContentProvider原理浅析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="weixiao">
@@ -249,7 +249,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">BroadcastReceiver</h1>
+          <h1 class="post-title" itemprop="name headline">ContentProvider原理浅析</h1>
         
 
         <div class="post-meta">
@@ -261,8 +261,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-30T13:25:54+08:00">
-                2017-12-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-07T17:30:10+08:00">
+                2018-01-07
               </time>
             
 
@@ -299,24 +299,27 @@
       
 
       
-        <h3 id="动态广播注册"><a href="#动态广播注册" class="headerlink" title="动态广播注册"></a>动态广播注册</h3><p>BroadcastReceiver的注册也通过在ContextImpl里调用AMS完成的。AMS类的registerReceiver方法主要做了以下两件事：</p>
-<ol>
-<li><p>对发送者的身份和权限做出一定的校检。</p>
-</li>
-<li><p>把这个BroadcastReceiver以BroadcastFilter的形式存储在AMS的mReceiverResolver变量中，供后续使用。</p>
-</li>
-</ol>
-<p>这样被传递过来的BroadcastReceiver已经成功地注册在系统之中，能够接收特定类型的广播了；那么注册在AndroidManifest.xml中的静态广播是如何被系统感知的呢？<br><a id="more"></a></p>
-<p>系统会通过PackageParser解析Apk中的AndroidManifest.xml文件，系统会在解析AndroidMafest.xml的<receiver>标签（也即静态注册的广播）的时候保存相应的信息；而Apk的解析过程是在PMS中进行的，因此静态注册广播的信息存储在PMS中。</receiver></p>
-<h3 id="广播发送"><a href="#广播发送" class="headerlink" title="广播发送"></a>广播发送</h3><p>发送广播也是通过AMS的broadcastIntent进行的，某个广播被发送之后，AMS会找出所有注册过的BroadcastReceiver中与这个广播匹配的接收者，然后将这个广播分发给相应的接收者处理。在broadcastIntentLocked方法中有两个列表receivers和registeredReceivers：</p>
-<ol>
-<li>receivers是对这个广播感兴趣的静态BroadcastReceiver列表；collectReceiverComponents 通过PackageManager获取了与这个广播匹配的静态BroadcastReceiver信息。</li>
-<li>mReceiverResolver存储了动态注册的BroadcastReceiver的信息；还记得这个mReceiverResolver吗？动态广播的注册过程中，动态注册的BroadcastReceiver的相关信息最终存储在此对象之中；在这里，通过mReceiverResolver对象匹配出了对应的BroadcastReceiver供进一步使用。</li>
-</ol>
-<h3 id="广播接收"><a href="#广播接收" class="headerlink" title="广播接收"></a>广播接收</h3><p>通过上文的分析过程我们知道，在AMS的broadcastIntentLocked方法中找出了符合要求的所有BroadcastReceiver，接下来就需要把这个广播分发到这些接收者之中。</p>
-<p>首先创建了一个BroadcastRecord代表此次发送的这条广播，然后把它丢进一个队列，最后通过scheduleBroadcastsLocked通知队列对广播进行处理。在BroadcastQueue中通过Handle调度了对于广播处理的消息，调度过程由processNextBroadcast方法完成，而这个方法通过performReceiveLocked最终调用了IIntentReceiver的performReceive方法。</p>
-<p>这个IIntentReceiver正是在广播注册过程中由App进程提供给AMS进程的Binder对象，现在AMS通过这个Binder对象进行IPC调用通知广播接受者所在进程完成余下操作。这个IItentReceiver的实现是LoadedApk.ReceiverDispatcher。</p>
-<p>LoadedApk.ReceiverDispatcher的performReceive方法会向ActivityThread的mH发送一个post消息，此时切换到广播接收者所在进程的主线程来执行任务。这个任务就是执行PendingResult里的run方法，这个run里面就调用了onReceive。</p>
+        <p>在Android世界里夸进程传输主要靠的就是Binder, 但单纯使用Binder是很难一次性传输大量数据，实际只有1M的缓存区。而作为Android系统数据共享的另一种方式ContentProvider，采用了匿名共享内存(Ashmem)机制完成数据共享，它可以方便地完成大量数据的传递。</p>
+<h3 id="ContentResolver的获取"><a href="#ContentResolver的获取" class="headerlink" title="ContentResolver的获取"></a>ContentResolver的获取</h3><p>通常我们通过getContentResolver获得ContentResolver已进行后续操作，ContextImpl类里实现了该方法，其直接返回了一个ApplicationContentResolver对象。 ApplicationContentResolver 继承至ContentResolver。<br><a id="more"></a><br>通过ContentResolver进行的query等操作其实就是调用的ContentResolver里的具体方法。ContentResolver的query通过获取IContentProvider(明显的binder接口)来调用查询接口，获得IContentProvider的具体逻辑在ApplicationContentResolver类的两个方法中实现，最终都是调用ActivityThread类的acquireProvider获取到IContentProvider。</p>
+<h3 id="获取本进程的ContentProvider"><a href="#获取本进程的ContentProvider" class="headerlink" title="获取本进程的ContentProvider"></a>获取本进程的ContentProvider</h3><p>ActivityThread类中的acquireProvider方法最后一个参数代表ContentProvider所在的进程是否存活，如果进程已死则在必要的时候需唤醒它。acquireProvider里的acquireExistingProvider首先尝试从本进程中获取ContentProvider，如果获取不到再请求AMS获取对应ContentProvider。不论是从哪里获取到的ContentProvider，获取完毕之后会调用installProvider来安装ContentProvider在本地进程（ArrayMap表）。</p>
+<p>installProvider安装即通过反射创建出这个ContentProvider对象，并取出这个对象中承载跨进程通信的Binder对象IContentProvider，将这个Binder对象作为参数创建出ProviderClientRecord对象保存在ActivityThread内部。</p>
+<p>ContentProvider是一个数据共享组件，为了支持跨进程共享采用了Binder，为了共享大量数据使用了匿名共享内存。ContentProvider主要支持query, insert, update, delete操作，由于这个组件一般工作在别的进程，因此这些调用都是Binder调用，这些调用最终都是委托给一个IContentProvider的Binder对象完成。</p>
+<h3 id="获取其他进程的ContentProvider"><a href="#获取其他进程的ContentProvider" class="headerlink" title="获取其他进程的ContentProvider"></a>获取其他进程的ContentProvider</h3><p>如果本地不存在ContentProvider那么会通过AMS的getContentProvider方法查询整个系统中是否存在这个ContentProvider。getContentProvider直接调用了getContentProviderImpl，该方法干了很多事情，最终目的可以总结为两点：</p>
+<ul>
+<li>使用PackageManagerService的resolveContentProvider方法根据Uri中的auth信息查询对应ContentProivoder的ProviderInfo信息。</li>
+<li>根据查询到的ContentProvider信息，尝试将这个ContentProvider组件安装到系统上。</li>
+</ul>
+<p>PackageManagerService通过mProvidersByAuthority这个ArrayMap保存着各个应用中ContentProvider的信息。这个map是通过scanPackageDirtyLI方法在Android系统启动的时候收集的，Android启动时会扫描一些目录，如/data/app/*，获取里面各个apk的AndroidManifest.xml文件内容信息，这些信息就会保存在PackageManagerService中。</p>
+<p>AMS对于ContentProvider的安装必须委托于目标进程。这里有两种情况：</p>
+<ul>
+<li>目标进程已经运行，那么AMS直接通知目标进程进行安装（已安装不用）</li>
+<li>目标进程已经死亡，则唤醒它叫他干活。</li>
+</ul>
+<p>如果ContentProvider所在进程处于运行状态，那么AMS通过ApplicationThread这个Binder对象完成scheduleInstallProvider调用，最终会调用到目标进程的installProvider方法。</p>
+<p>如果ContentProvider所在进程已经死亡，则会调用startProcessLocked来启动新的进程，最终会调用Process类的start方法，该方法通过socket与Zygote进程进行通信，通知Zygote进程fork出一个子进程，然后通过反射调用之前传递过来的一个入口类的main函数，一般来说这个入口类就是ActivityThread，因此子进程fork出来之后会执行ActivityThread类的main函数。</p>
+<p>调用startProcessLocked后AMS会在getContentProviderImpl结尾等待目标进程创建好并完成安装，等到目标集成安装完成后就把对应的ContentProvider返回给调用方。</p>
+<p>目标进程将ContentProvider安装到AMS是在app启动过程中的handleBindApplication方法，里面调用了installContentProviders方法完成操作，该方法早于Applition类的onCreate回调。</p>
+<h3 id="unstable与stable"><a href="#unstable与stable" class="headerlink" title="unstable与stable"></a>unstable与stable</h3><p>一般先获取unstable的Provider，执行失败后再获取stable的Provider，最终都是调用上面说是的acquireProvider来获取IContentProvider。stable与unstable的区别，采用unstable类型的ContentProvider的app不会因为远程ContentProvider进程的死亡而被杀，stable则恰恰相反。</p>
 
       
     </div>
@@ -341,8 +344,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/24/Android-Service-启动/" rel="next" title="Android Service 启动">
-                <i class="fa fa-chevron-left"></i> Android Service 启动
+              <a href="/2018/01/07/Android-资源管理框架——-Asset-Manager/" rel="next" title="Android 资源管理框架—— Asset Manager">
+                <i class="fa fa-chevron-left"></i> Android 资源管理框架—— Asset Manager
               </a>
             
           </div>
@@ -350,10 +353,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/12/30/app编写注意事项/" rel="prev" title="app编写注意事项">
-                app编写注意事项 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -473,7 +472,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#动态广播注册"><span class="nav-number">1.</span> <span class="nav-text">动态广播注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#广播发送"><span class="nav-number">2.</span> <span class="nav-text">广播发送</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#广播接收"><span class="nav-number">3.</span> <span class="nav-text">广播接收</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ContentResolver的获取"><span class="nav-number">1.</span> <span class="nav-text">ContentResolver的获取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获取本进程的ContentProvider"><span class="nav-number">2.</span> <span class="nav-text">获取本进程的ContentProvider</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获取其他进程的ContentProvider"><span class="nav-number">3.</span> <span class="nav-text">获取其他进程的ContentProvider</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unstable与stable"><span class="nav-number">4.</span> <span class="nav-text">unstable与stable</span></a></li></ol></div>
             
 
           </div>
