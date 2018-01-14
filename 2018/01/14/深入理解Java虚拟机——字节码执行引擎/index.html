@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="每个方法从调用开始至执行完成，都对应着一个栈帧在虚拟机栈的入栈到出栈过程。每个栈帧都包含局部变量表、操作数栈、动态连接、方法返回地址和一些额外信息。在编译代码时栈帧内容就已经确定。 局部变量表局部变量表示一组变量存储空间，用于存储方法参数和方法内部的局部变量。局部变量表的容量以变量槽（Slot）为最小单位，通常一个Sl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解Java虚拟机——字节码执行引擎">
+<meta property="og:url" content="http://yoursite.com/2018/01/14/深入理解Java虚拟机——字节码执行引擎/index.html">
+<meta property="og:site_name" content="weixiao">
+<meta property="og:description" content="每个方法从调用开始至执行完成，都对应着一个栈帧在虚拟机栈的入栈到出栈过程。每个栈帧都包含局部变量表、操作数栈、动态连接、方法返回地址和一些额外信息。在编译代码时栈帧内容就已经确定。 局部变量表局部变量表示一组变量存储空间，用于存储方法参数和方法内部的局部变量。局部变量表的容量以变量槽（Slot）为最小单位，通常一个Slot占用32位长度的内存空间。如果执行的是实例方法（非static的方法），那么">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-01-14T06:12:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解Java虚拟机——字节码执行引擎">
+<meta name="twitter:description" content="每个方法从调用开始至执行完成，都对应着一个栈帧在虚拟机栈的入栈到出栈过程。每个栈帧都包含局部变量表、操作数栈、动态连接、方法返回地址和一些额外信息。在编译代码时栈帧内容就已经确定。 局部变量表局部变量表示一组变量存储空间，用于存储方法参数和方法内部的局部变量。局部变量表的容量以变量槽（Slot）为最小单位，通常一个Slot占用32位长度的内存空间。如果执行的是实例方法（非static的方法），那么">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/14/深入理解Java虚拟机——字节码执行引擎/"/>
+
+
+
+
+
+  <title>深入理解Java虚拟机——字节码执行引擎 | weixiao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">weixiao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/14/深入理解Java虚拟机——字节码执行引擎/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="weixiao">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="weixiao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解Java虚拟机——字节码执行引擎</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-14T13:40:18+08:00">
+                2018-01-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>每个方法从调用开始至执行完成，都对应着一个栈帧在虚拟机栈的入栈到出栈过程。每个栈帧都包含局部变量表、操作数栈、动态连接、方法返回地址和一些额外信息。在编译代码时栈帧内容就已经确定。</p>
+<h3 id="局部变量表"><a href="#局部变量表" class="headerlink" title="局部变量表"></a>局部变量表</h3><p>局部变量表示一组变量存储空间，用于存储方法参数和方法内部的局部变量。局部变量表的容量以变量槽（Slot）为最小单位，通常一个Slot占用32位长度的内存空间。如果执行的是实例方法（非static的方法），那么局部变量表中的第0位索引的Slot默认就是用于传递方法所属对象实例的引用，其余参数按照参数表顺序排列，参数表完毕后再根据方法体内部定义的变量顺序和作用域分配其余Slot。<br><a id="more"></a><br>还有一点需注意，类变量有两次赋初始值的过程，一次在准备阶段，一次在初始化阶段，因此即使没给类变量赋值，类变量也可使用。但是局部变量如果不赋初值是不能使用的。</p>
+<h3 id="操作数栈"><a href="#操作数栈" class="headerlink" title="操作数栈"></a>操作数栈</h3><p>操作数栈是一个后入先出栈，同局部变量表一样，操作数栈的最大深度在也在编译的时候就写入到Code属性的max_stacks数据项中。操作数栈中每个元素都可以是任意的Java数据类型。</p>
+<p>在方法开始执行的时候，这个方法的操作数栈是空的，执行过程中会有各种字节码指令往操作数栈中写入或提取。如算数运算或者方法调用传参。</p>
+<h3 id="返回地址"><a href="#返回地址" class="headerlink" title="返回地址"></a>返回地址</h3><p>当一个方法开始执行，只有两种方式可以退出这个方法，一是遇到返回指令，另一个是遇到异常。方法的退出过程实际就是当前栈出栈，退出时的操作有：恢复上一层方法的局部变量表和操作数栈，把返回值压入调用者的操作数栈中，调整PC计数器的值指向方法调用指令后面的一条指令等。</p>
+<h3 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h3><p>方法调用并不等同于方法执行，方法调用阶段的任务就是确定调用方法的版本（即调用的哪一个方法），由于Java在编译过程中并没有链接的步骤，一切方法在Class文件里只是符文引用。需要在类加载期间甚至是运行期间才能确定目标方法的直接引用（内存布局中的入口地址）。</p>
+<h4 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h4><p>在类加载的解析阶段，会对部分符号引用转化为直接引用，这个的前提是调用的方法在编译期可知且运行期不可变。主要包括静态方法和私有方法（这两种方法不能被重写）。</p>
+<p>Java虚拟机提供5条方法调用字节指令。</p>
+<ul>
+<li>invokestatic 调用静态方法</li>
+<li>invokespecial 调用实例构造器<init>方法，私有方法和父类方法</init></li>
+<li>invokevirtual 调用虚方法</li>
+<li>invokeinterface 调用接口方法</li>
+<li>invokedynamic 运行时动态解析出调用点限定符所引用方法，然后再执行该方法。</li>
+</ul>
+<p>invokestatic和invokespecial调用的方法，在解析阶段就可将符号引用转化为直接引用，这些方法称为非虚方法，与之对应的称为虚方法（除final方法外，final方法用invokevirtual调用）。</p>
+<h4 id="分派–静态分派"><a href="#分派–静态分派" class="headerlink" title="分派–静态分派"></a>分派–静态分派</h4><pre><code>public abstract class Human {
+
+}
+
+public class Man extends Human{
+
+}
+
+Human man = new Man();
+</code></pre><p>上面的Human称为变量的静态类型， Man称为变量的实际类型。变量的静态类型不会变化，在编译期间就可确定；实际类型在运行期才可确定。在编译阶段Javac编译器会根据参数的静态类型决定使用哪个重载版本。</p>
+<p>所有依赖静态类型来决定方法执行版本的分派称为静态分派。典型场景就是方法重载。</p>
+<h4 id="分派–动态分派"><a href="#分派–动态分派" class="headerlink" title="分派–动态分派"></a>分派–动态分派</h4><p>对于方法的重写，分派依赖的就是变量的实际类型。invokevirtual指令执行的第一步就是在运行期间确定接收者的实际类型。我们把在运行期间根据实际类型确定方法执行版本的分派称为动态分派。虚拟机会在方法区中建立一个虚方法表，来代替元素查找以提高性能。虚方法表中存放着各个方法的实际入口地址。如果子类重写父类的方法，子类方法表中的地址就会替换为指向子类实现版本的入口地址。</p>
+<h4 id="分派–单分派与多分派"><a href="#分派–单分派与多分派" class="headerlink" title="分派–单分派与多分派"></a>分派–单分派与多分派</h4><p>方法的接收者与方法的参数统称为方法的宗量。单分派就是根据一个宗量对目标方法进行选择，多分派就是根据多个宗量对目标方法进行选择。</p>
+<h3 id="基于栈与基于寄存器的指令集"><a href="#基于栈与基于寄存器的指令集" class="headerlink" title="基于栈与基于寄存器的指令集"></a>基于栈与基于寄存器的指令集</h3><p>基于栈的指令集在执行过程中是通过出栈和入栈对数据进行转移操作，类似于数据结构中通过栈来实现一个表达式计算的方式。而基于寄存器的指令集则是直接对寄存器的赋值操作完成数据转移（Android的dalvik虚拟机是寄存器模式）。</p>
+<p>基于栈的指令集不需要考虑硬件性，移植性强，代码更加经凑，但指令数量一般比寄存器架构多。而基于寄存器的指令集，执行速度更快。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/07/ContentProvider原理浅析/" rel="next" title="ContentProvider原理浅析">
+                <i class="fa fa-chevron-left"></i> ContentProvider原理浅析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.jpg"
+                alt="weixiao" />
+            
+              <p class="site-author-name" itemprop="name">weixiao</p>
+              <p class="site-description motion-element" itemprop="description">未知的未，知晓的晓</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#局部变量表"><span class="nav-number">1.</span> <span class="nav-text">局部变量表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#操作数栈"><span class="nav-number">2.</span> <span class="nav-text">操作数栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#返回地址"><span class="nav-number">3.</span> <span class="nav-text">返回地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方法调用"><span class="nav-number">4.</span> <span class="nav-text">方法调用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#解析"><span class="nav-number">4.1.</span> <span class="nav-text">解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分派–静态分派"><span class="nav-number">4.2.</span> <span class="nav-text">分派–静态分派</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分派–动态分派"><span class="nav-number">4.3.</span> <span class="nav-text">分派–动态分派</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分派–单分派与多分派"><span class="nav-number">4.4.</span> <span class="nav-text">分派–单分派与多分派</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于栈与基于寄存器的指令集"><span class="nav-number">5.</span> <span class="nav-text">基于栈与基于寄存器的指令集</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">weixiao</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
