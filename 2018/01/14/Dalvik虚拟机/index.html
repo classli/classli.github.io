@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Davilk与Java虚拟机区别Dalvik虚拟机与Java虚拟机最大区别是他们分别具有不同类型的文件格式以及指令集，davilK使用dex(Dalvik Executable）格式的类文件，而Java虚拟机使用的是class格式的类文件，一个dex文件可以包含多个类，多个类中重复的字符串和常数只保存一次，所以文件更小">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dalvik虚拟机">
+<meta property="og:url" content="http://yoursite.com/2018/01/14/Dalvik虚拟机/index.html">
+<meta property="og:site_name" content="weixiao">
+<meta property="og:description" content="Davilk与Java虚拟机区别Dalvik虚拟机与Java虚拟机最大区别是他们分别具有不同类型的文件格式以及指令集，davilK使用dex(Dalvik Executable）格式的类文件，而Java虚拟机使用的是class格式的类文件，一个dex文件可以包含多个类，多个类中重复的字符串和常数只保存一次，所以文件更小，更适合手机。 Davlik基于寄存器、java虚拟机基于堆栈。java虚拟机占">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-01-14T07:31:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dalvik虚拟机">
+<meta name="twitter:description" content="Davilk与Java虚拟机区别Dalvik虚拟机与Java虚拟机最大区别是他们分别具有不同类型的文件格式以及指令集，davilK使用dex(Dalvik Executable）格式的类文件，而Java虚拟机使用的是class格式的类文件，一个dex文件可以包含多个类，多个类中重复的字符串和常数只保存一次，所以文件更小，更适合手机。 Davlik基于寄存器、java虚拟机基于堆栈。java虚拟机占">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/14/Dalvik虚拟机/"/>
+
+
+
+
+
+  <title>Dalvik虚拟机 | weixiao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">weixiao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/14/Dalvik虚拟机/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="weixiao">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="weixiao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Dalvik虚拟机</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-14T14:15:13+08:00">
+                2018-01-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Davilk与Java虚拟机区别"><a href="#Davilk与Java虚拟机区别" class="headerlink" title="Davilk与Java虚拟机区别"></a>Davilk与Java虚拟机区别</h3><p>Dalvik虚拟机与Java虚拟机最大区别是他们分别具有不同类型的文件格式以及指令集，davilK使用dex(Dalvik Executable）格式的类文件，而Java虚拟机使用的是class格式的类文件，一个dex文件可以包含多个类，多个类中重复的字符串和常数只保存一次，所以文件更小，更适合手机。</p>
+<p>Davlik基于寄存器、java虚拟机基于堆栈。java虚拟机占用更多cpu时间、Davlik占用更多空间。<br><a id="more"></a><br>Davlik适用于AOT,即在解释运行前先编译成本地代码，java虚拟机适合JIT，即运行时编译。</p>
+<p>总结Davlik优点</p>
+<pre><code>1. 将多个类文件收集到同一个dex文件中，以便节省空间；
+
+2. 使用只读的内存映射方式加载dex文件，以便可以多进程共享dex文件，节省程序加载时间；
+
+3. 提前调整好字节序（byte order）和字对齐（word alignment）方式，使得它们更适合于本地机器，以便提高指令执行速度；
+
+4. 尽量提前进行字节码验证（bytecode verification），提高程序的加载速度；
+
+5. 需要重写字节码的优化要提前进行。
+</code></pre><h3 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h3><p>获得应用分配的堆栈大小方式</p>
+<pre><code>public clss ActivityManager{
+
+  /**
+     * Return the approximate per-application memory class of the current
+     * device.  This gives you an idea of how hard a memory limit you should
+     * impose on your application to let the overall system work best.  The
+     * returned value is in megabytes; the baseline Android memory class is
+     * 16 (which happens to be the Java heap limit of those devices); some
+     * device with more memory may return 24 or even higher numbers.
+     */
+    public int getMemoryClass() {
+        return staticGetMemoryClass();
+    }
+
+/** @hide */
+static public int staticGetMemoryClass() {
+    // Really brain dead right now -- just take this from the configured
+    // vm heap size, and assume it is in megabytes and thus ends with &quot;m&quot;.
+    String vmHeapSize = SystemProperties.get(&quot;dalvik.vm.heapgrowthlimit&quot;, &quot;&quot;);
+    if (vmHeapSize != null &amp;&amp; !&quot;&quot;.equals(vmHeapSize)) {
+        return Integer.parseInt(vmHeapSize.substring(0, vmHeapSize.length()-1));
+    }
+    return staticGetLargeMemoryClass();
+ }
+}
+</code></pre><p>android触发垃圾回收后输出日志为</p>
+<pre><code>D/dalvikvm(9050): GC_CONCURRENT freed 2049K, 65% free 3571K/9991K, external 4703K/5261K, paused 2ms+2ms 
+</code></pre><h3 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h3><p>一般来说，虚拟机中的进程和线程与目标机器本地操作系统的进程和线程一一对应。Linux上没有纯粹的线程概念，两个进程共享一个地址空间，即可认为他们是同一进程的两个线程。</p>
+<p><strong>android进程特点</strong></p>
+<p>每个android应用都对应一个davilk虚拟机, android启动后init进程会fork一个Zygote进程，Zygote启动时会创建一个虚拟机，该虚拟机会将所有java核心类库加载起来。当zygote创建一个android进程时，会通过复制自身，即通过fork系统调用实现，这样一方面复制了zygote中的虚拟机，另一方面共享了同一套java核心库，这样应用加载快并节省了内存空间。</p>
+<h3 id="Davlik虚拟机的启动过程"><a href="#Davlik虚拟机的启动过程" class="headerlink" title="Davlik虚拟机的启动过程"></a>Davlik虚拟机的启动过程</h3><p>zygote在进程启动时会调用 AndroidRuntime::start函数，如下：</p>
+<pre><code>void AndroidRuntime::start(const char* className, const Vector&lt;String8&gt;&amp; options, bool zygote)
+{
+   static const String8 startSystemServer(&quot;start-system-server&quot;);
+   ...
+   const char* rootDir = getenv(&quot;ANDROID_ROOT&quot;);
+   ...
+   setenv(&quot;ANDROID_ROOT&quot;, rootDir, 1);
+    ...
+    /* start the virtual machine */
+    if (startVm(&amp;mJavaVM, &amp;env, zygote) != 0) {
+        return;
+    }
+    ...
+    /*
+     * Register android functions.
+     */
+    if (startReg(env) &lt; 0) {
+        ALOGE(&quot;Unable to register all android natives\n&quot;);
+        return;
+    }
+    ...
+    /*
+     * Start VM.  This thread becomes the main thread of the VM, and will
+     * not return until the VM exits.
+     */
+    char* slashClassName = toSlashClassName(className);
+    ....
+    jmethodID startMeth = env-&gt;GetStaticMethodID(startClass, &quot;main&quot;,
+        &quot;([Ljava/lang/String;)V&quot;);
+    ...
+    env-&gt;CallStaticVoidMethod(startClass, startMeth, strArray);
+}
+</code></pre><p>start函数主要工作如下：</p>
+<ol>
+<li>调用startVm创建虚拟机，并保存到mJavaVM中。</li>
+<li>调用startReg来注册一些Android核心类的JNI方法。</li>
+<li>调用className所描述的Java类的main方法，来作为Zygote进程的Java层入口。该class即为ZygoteInit，该类的main会加载大量Android核心类和系统资源文件。</li>
+</ol>
+<p>Davlik虚拟机创建实例过程：</p>
+<pre><code>int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
+{
+    ...
+    property_get(&quot;dalvik.vm.checkjni&quot;, propBuf, &quot;&quot;);
+    ...
+    property_get(&quot;dalvik.vm.execution-mode&quot;, propBuf, &quot;&quot;);
+    ...
+    parseRuntimeOption(&quot;dalvik.vm.usejit&quot;, usejitOptsBuf, &quot;-Xusejit:&quot;);
+    ...
+    /*
+     * Initialize the VM.
+     *
+     * The JavaVM* is essentially per-process, and the JNIEnv* is per-thread.
+     * If this call succeeds, the VM is ready, and we can start issuing
+     * JNI calls.
+     */
+    if (JNI_CreateJavaVM(pJavaVM, pEnv, &amp;initArgs) &lt; 0) {
+        ALOGE(&quot;JNI_CreateJavaVM failed\n&quot;);
+        return -1;
+    }
+    return 0;
+}
+</code></pre><p>该函数大部分代码是对虚拟机进行配置，如：java jni合法性检测、堆栈大小、最后通过JNI_CreateJavaVM实际创建并初始化虚拟机。</p>
+<pre><code>extern &quot;C&quot; jint JNI_CreateJavaVM(JavaVM** p_vm, JNIEnv** p_env, void* vm_args) {
+    ...
+    const JavaVMInitArgs* args = static_cast&lt;JavaVMInitArgs*&gt;(vm_args);
+    ....
+
+    options.push_back(std::make_pair(std::string(option-&gt;optionString), option-&gt;extraInfo));
+    ...
+    if (!Runtime::Create(options, ignore_unrecognized)) {
+    return JNI_ERR;
+    }
+    ...
+    Runtime* runtime = Runtime::Current();
+    bool started = runtime-&gt;Start();
+    ...
+    *p_env = Thread::Current()-&gt;GetJniEnv();
+    *p_vm = runtime-&gt;GetJavaVM();
+    return JNI_OK;
+}
+</code></pre><p>该函数根据vm_args参数，创建出java虚拟机和当前线程的JNI环境，然后通过p_vm和p_env返回给调用者。</p>
+<p>本地接口表由全局变量gNativeInterface来描述, 它是JNINativeInterface类型的结构体，该结构体中定义这native层调用java层的接口函数，如：FindClass、GetMethodID。</p>
+<p>在davlik虚拟机创建好后，startReg来注册Android核心类的JNI方法。</p>
+<pre><code>int AndroidRuntime::startReg(JNIEnv* env) {
+    ...
+    /*
+     * This hook causes all future threads created in this process to be
+     * attached to the JavaVM.  (This needs to go away in favor of JNI
+     * Attach calls.)
+     */
+    androidSetCreateThreadFunc((android_create_thread_fn) javaCreateThreadEtc);
+    ....
+    register_jni_procs(gRegJNI, NELEM(gRegJNI), env);
+    ....
+}
+</code></pre><ol>
+<li>通过调用androidSetCreateThreadFunc创建了一个钩子函数，当创建一个Native线程时，javaCreateThreadEtc会被用来初始化该线程的JNI环境。</li>
+<li>调用register_jni_procs来注册Android核心类的JNI方法。</li>
+</ol>
+<p>Davlik启动过程主要是完成了一下四件事情：</p>
+<ol>
+<li><p>创建了一个Dalvik虚拟机实例；</p>
+</li>
+<li><p>加载了Java核心类及其JNI方法；</p>
+</li>
+<li><p>为主线程的设置了一个JNI环境；</p>
+</li>
+<li><p>注册了Android核心类的JNI方法。</p>
+</li>
+</ol>
+<h3 id="Davlik虚拟机的运行过程"><a href="#Davlik虚拟机的运行过程" class="headerlink" title="Davlik虚拟机的运行过程"></a>Davlik虚拟机的运行过程</h3><p>经过JNI_CreateJavaVM调用后，就获得了Zygote的Davlik实例JavaVM，以及Zygote进程的主线程的JNI环境JNIEnv。紧接着Zygote进程就会通过JNIEnv的CallStaticVoidMethod调用ZygoteInit的main函数，依次作为Java代码的入口函数。</p>
+<p>jni.h中的CallStaticVoidMethod如下：</p>
+<pre><code>void CallStaticVoidMethod(jclass clazz, jmethodID methodID, ...)
+    {
+        va_list args;
+        va_start(args, methodID);
+        functions-&gt;CallStaticVoidMethodV(this, clazz, methodID, args);
+        va_end(args);
+    }
+</code></pre><p>functions 指向JNINativeInterface结构体，调用的是他的成员变量CallStaticVoidMethodV（函数指针），该成员变量指向的同名函数CallStaticVoidMethodV，通过一系列调用，期间会判断要调用的方法是JNI方法还是JAVA方法，是JNI方法就直接执行，是JAVA方法就需要通过解释器来执行，Dalvik针对每个平台都有一个优化后的解释器也有一个通用解释器。解释器支持调试状态。</p>
+<h3 id="Davlik虚拟机JNI方法的注册过程"><a href="#Davlik虚拟机JNI方法的注册过程" class="headerlink" title="Davlik虚拟机JNI方法的注册过程"></a>Davlik虚拟机JNI方法的注册过程</h3><p>JNI函数是在操作系统本地执行的，不是由Davlik虚拟机。JNI方法在能够被调用之前，首先需要加载到当前进程的地址空间里来，加载方法为<code>System.loadLibrary(&quot;libxxx&quot;);</code></p>
+<pre><code>public final class System {
+    public static void loadLibrary(String libname) {
+        Runtime.getRuntime().loadLibrary0(VMStack.getCallingClassLoader(), libname);
+    }
+}
+</code></pre><p>System.loadLibrary通过调用Runtime的loadLibrary0进行实际加载。</p>
+<pre><code>public class Runtime{
+    synchronized void loadLibrary0(ClassLoader loader, String libname) {
+        if (loader != null) {
+            ....
+            String filename = loader.findLibrary(libraryName);
+            ....
+            String error = doLoad(filename, loader);
+            ....
+            return;
+       }
+       String filename = System.mapLibraryName(libraryName);
+       for (String directory : mLibPaths) { 
+           String candidate = directory + filename; 
+           ....
+           String error = doLoad(candidate, loader);
+           ....
+       }
+    }
+}
+</code></pre><p>每一个类都有对应的类加载器，在Davlik虚拟机中，类加载器不仅知道所加载的类的路径，还知道所属APK存放so文件的路径。loadLibrary0里又通过doLoad进行加载，而doload又调用了nativeLoad方法，该方法为native方法实际调用的是Runtime.c中的Runtime_nativeLoad。</p>
+<pre><code>Runtime_nativeLoad(JNIEnv* env, jclass ignored, jstring javaFilename,
+                   jobject javaLoader, jstring javaLibrarySearchPath)
+{
+    return JVM_NativeLoad(env, javaFilename, javaLoader, javaLibrarySearchPath);
+}
+</code></pre><p>JVM_NativeLoad里实际调用LoadNativeLibrary，该方法在java_vm_ext.cc文件里。</p>
+<pre><code>bool JavaVMExt::LoadNativeLibrary(JNIEnv* env,
+                                  const std::string&amp; path,
+                                  jobject class_loader,
+                                  jstring library_path,
+                                  std::string* error_msg) {
+
+   // See if we&apos;ve already loaded this library.  If we have, and the class loader
+  // matches, return successfully without doing anything.
+  // TODO: for better results we should canonicalize the pathname (or even compare
+  // inodes). This implementation is fine if everybody is using System.loadLibrary.
+  ....
+  {
+    // TODO: move the locking (and more of this logic) into Libraries.
+    MutexLock mu(self, *Locks::jni_libraries_lock_);
+    library = libraries_-&gt;Get(path);
+  }
+  ....
+  if (library != nullptr) {
+    // Use the allocator pointers for class loader equality to avoid unnecessary weak root decode.
+    if (library-&gt;GetClassLoaderAllocator() != class_loader_allocator) {
+      // The library will be associated with class_loader. The JNI
+      // spec says we can&apos;t load the same library into more than one
+      // class loader.
+      StringAppendF(error_msg, &quot;Shared library \&quot;%s\&quot; already opened by &quot;
+          &quot;ClassLoader %p; can&apos;t open in ClassLoader %p&quot;,
+          path.c_str(), library-&gt;GetClassLoader(), class_loader);
+      LOG(WARNING) &lt;&lt; error_msg;
+      return false;
+    }
+    VLOG(jni) &lt;&lt; &quot;[Shared library \&quot;&quot; &lt;&lt; path &lt;&lt; &quot;\&quot; already loaded in &quot;
+              &lt;&lt; &quot; ClassLoader &quot; &lt;&lt; class_loader &lt;&lt; &quot;]&quot;;
+    if (!library-&gt;CheckOnLoadResult()) {
+      StringAppendF(error_msg, &quot;JNI_OnLoad failed on a previous attempt &quot;
+          &quot;to load \&quot;%s\&quot;&quot;, path.c_str());
+      return false;
+    }
+    return true;
+  }
+  ....
+  void* handle = android::OpenNativeLibrary(env,
+                                            runtime_-&gt;GetTargetSdkVersion(),
+                                            path_str,
+                                            class_loader,
+                                            library_path);
+  ....                                          
+  // Create SharedLibrary ahead of taking the libraries lock to maintain lock ordering.
+std::unique_ptr&lt;SharedLibrary&gt; new_library(
+    new SharedLibrary(env, self, path, handle, class_loader, class_loader_allocator));
+  ....
+  sym = library-&gt;FindSymbol(&quot;JNI_OnLoad&quot;, nullptr);                                          
+  ....
+}
+</code></pre><p>该函数首先检查这个so文件是否被加载过，如果被加载过且以前的类加载器和本次的不同或者以前加载失败，则返回false表示不能在本进程加载该so文件。</p>
+<p>如果该so没有被加载过，则调用OpenNativeLibrary将该文件加载到当前进程，返回对应文案的句柄handle，然后还会调用所加载so文件中的JNI_OnLoad方法注册其中的JNI函数。</p>
+<p>JNI_OnLoad方法中通过调用 jniRegisterNativeMethods 进行注册。</p>
+<pre><code>extern &quot;C&quot; int jniRegisterNativeMethods(C_JNIEnv* env, const char* className,
+const JNINativeMethod* gMethods, int numMethods)
+{
+     ....
+     scoped_local_ref&lt;jclass&gt; c(env, findClass(env, className));
+     ....
+     (*env)-&gt;RegisterNatives(e, c.get(), gMethods, numMethods)
+     ....
+}
+</code></pre><p>从上面的代码可以看出实际又调用了JNIEnv结构体的成员函数RegisterNatives，而RegisterNatives 又调用了Dalvik虚拟机内部定义的函数RegisterNatives。</p>
+<p>JNI注册其实就是JNI函数的函数地址和调用JNI函数的Bridge函数绑定到method方法里的某些字段上，这就让Java方法和JNI函数产生了联系。</p>
+<h3 id="Dalvik虚拟机进程和线程的创建过程"><a href="#Dalvik虚拟机进程和线程的创建过程" class="headerlink" title="Dalvik虚拟机进程和线程的创建过程"></a>Dalvik虚拟机进程和线程的创建过程</h3><h4 id="Dalvik虚拟机进程的创建过程"><a href="#Dalvik虚拟机进程的创建过程" class="headerlink" title="Dalvik虚拟机进程的创建过程"></a>Dalvik虚拟机进程的创建过程</h4><p>Dalvik虚拟机进程的创建即为android应用进程的创建，最终会通过Zygote类的forkAndSpecialize方法进行创建。forkAndSpecialize主要是调用了nativeForkAndSpecialize方法，该方法是一个JNI方法，是由C++层的com_android_internal_os_Zygote_nativeForkAndSpecialize进行具体实现的。</p>
+<pre><code>static jint com_android_internal_os_Zygote_nativeForkAndSpecialize(
+        JNIEnv* env, jclass, jint uid, jint gid, jintArray gids,
+        jint debug_flags, jobjectArray rlimits,
+        jint mount_external, jstring se_info, jstring se_name,
+        jintArray fdsToClose, jstring instructionSet, jstring appDataDir) {
+ ....
+ return ForkAndSpecializeCommon(env, uid, gid, gids, debug_flags,
+            rlimits, capabilities, capabilities, mount_external, se_info,
+            se_name, false, fdsToClose, instructionSet, appDataDir);       
+}
+</code></pre><p>最终是调用了ForkAndSpecializeCommon</p>
+<pre><code>static pid_t ForkAndSpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray javaGids,
+                                     jint debug_flags, jobjectArray javaRlimits,
+                                     jlong permittedCapabilities, jlong effectiveCapabilities,
+                                     jint mount_external,
+                                     jstring java_se_info, jstring java_se_name,
+                                     bool is_system_server, jintArray fdsToClose,
+                                     jstring instructionSet, jstring dataDir) {
+    .....
+    pid_t pid = fork();
+    if (pid == 0) {
+         ....
+         bool use_native_bridge = !is_system_server &amp;&amp; (instructionSet != NULL)
+        &amp;&amp; android::NativeBridgeAvailable();
+        if (use_native_bridge) {
+          ScopedUtfChars isa_string(env, instructionSet);
+          use_native_bridge = android::NeedsNativeBridge(isa_string.c_str());
+        }
+         .....
+         if (!is_system_server) {
+            int rc = createProcessGroup(uid, getpid());
+            .....
+        }
+        SetGids(env, javaGids);
+        if (use_native_bridge) {
+          ......
+          android::PreInitializeNativeBridge(data_dir.c_str(), isa_string.c_str());
+        }
+        rc = setresuid(uid, uid, uid);
+        ....
+        rc = selinux_android_setcontext(uid, is_system_server, se_info_c_str, se_name_c_str);
+        ....
+        SetThreadName(se_name_c_str);
+        ....
+        env-&gt;CallStaticVoidMethod(gZygoteClass, gCallPostForkChildHooks, debug_flags,
+                          is_system_server, instructionSet);
+        ....
+        return pid;
+    }                                     
+}
+</code></pre><p>函数ForkAndSpecializeCommon除了创建应用进程还创建系统进程，当is_system_server为true即为系统进程时，会调用createProcessGroup设置该进程的uid和groupId，以获得某些特权。</p>
+<p>通过 fork创建出来新的子进程，然后对子进程进行相应的设置。</p>
+<p>经过上面处理一个Davlik虚拟机进程就创建出来了，实际上就是一个Linux进程。</p>
+<h4 id="Dalvik虚拟机线程的创建过程"><a href="#Dalvik虚拟机线程的创建过程" class="headerlink" title="Dalvik虚拟机线程的创建过程"></a>Dalvik虚拟机线程的创建过程</h4><p>Dalivk线程是通过Thread类的start方法来创建。</p>
+<pre><code>public class Thread implements Runnable {
+    public synchronized void start() {
+     ....
+     nativeCreate(this, stackSize, daemon);
+     ....
+    }
+}
+</code></pre><p>start方法通过调用nativeCreate这个JNI方法实现，经过中间的一些调用最后运行到了CreateNativeThread函数。</p>
+<pre><code>void Thread::CreateNativeThread(JNIEnv* env, jobject java_peer, size_t stack_size, bool is_daemon) {
+    ....
+    thread_name = java_name-&gt;ToModifiedUtf8();
+    ...
+    Runtime* runtime = Runtime::Current();
+    ....
+    // Atomically start the birth of the thread ensuring the runtime isn&apos;t shutting down.
+    bool thread_start_during_shutdown = false;
+    ....
+    Thread* child_thread = new Thread(is_daemon);
+    ....
+    stack_size = FixStackSize(stack_size);
+    ....
+      // Try to allocate a JNIEnvExt for the thread. We do this here as we might be out of memory and
+    // do not have a good way to report this on the child&apos;s side.
+    std::unique_ptr&lt;JNIEnvExt&gt; child_jni_env_ext(
+      JNIEnvExt::Create(child_thread, Runtime::Current()-&gt;GetJavaVM()));
+    if (child_jni_env_ext.get() != nullptr) {
+        ....
+        CHECK_PTHREAD_CALL(pthread_attr_setstacksize, (&amp;attr, stack_size), stack_size);
+           pthread_create_result = pthread_create(&amp;new_pthread,
+                                           &amp;attr,
+                                           Thread::CreateCallback,
+                                           child_thread);
+    }            
+    if (pthread_create_result == 0) {
+      // pthread_create started the new thread. The child is now responsible for managing the
+      // JNIEnvExt we created.
+      // Note: we can&apos;t check for tmp_jni_env == nullptr, as that would require synchronization
+      //       between the threads.
+      child_jni_env_ext.release();
+      return;
+    }
+    ....
+}
+</code></pre><p>stack_size表示要创建的线程栈大小，如果没指定则用默认大小。Dalvik虚拟机线程实际上具有两个栈，一个是Java栈，另一个是Native栈。Native栈是在调用Native代码时使用的，它是由操作系统来管理的，而Java栈是由Dalvik虚拟机来管理的。上述的child_thread指针中即保存着native层的Thread对象。</p>
+<p>然后调用pthread_create来创建一个线程，pthread_create实际由pthread库提供的一个函数，他是通过系统调用clone来请求内核创建一个线程的。由此就可以看出，Dalvik虚拟机线程实际上就是本地操作系统线程。</p>
+<p>CreateCallback是创建的线程的入口函数，即新创建的Davlik虚拟机线程启动入口。</p>
+<pre><code>void* Thread::CreateCallback(void* arg) {
+    Thread* self = reinterpret_cast&lt;Thread*&gt;(arg);
+    ...
+    // Invoke the &apos;run&apos; method of our java.lang.Thread.
+    mirror::Object* receiver = self-&gt;tlsPtr_.opeer;
+    jmethodID mid = WellKnownClasses::java_lang_Thread_run;
+    ScopedLocalRef&lt;jobject&gt; ref(soa.Env(), soa.AddLocalReference&lt;jobject&gt;(receiver));
+    InvokeVirtualOrInterfaceWithJValues(soa, ref.get(), mid, nullptr);
+    ...
+}
+</code></pre><p>该函数首先会对新键的线程进行初始化，然后调用 Thread.run()方法，最后run方法返回后会对线程进清理。</p>
+<h4 id="只执行C-C-代码的Native线程的创建过程"><a href="#只执行C-C-代码的Native线程的创建过程" class="headerlink" title="只执行C/C++代码的Native线程的创建过程"></a>只执行C/C++代码的Native线程的创建过程</h4><p>从C++类Threads.cpp的成员函数run开始分析Dalvik虚拟机中的Native线程的创建过程。</p>
+<pre><code>status_t Thread::run(const char* name, int32_t priority, size_t stack)
+{
+    .....
+    if (mCanCallJava) {
+        res = createThreadEtc(_threadLoop,
+                this, name, priority, stack, &amp;mThread);
+    } else {
+        res = androidCreateRawThreadEtc(_threadLoop,
+                this, name, priority, stack, &amp;mThread);
+    }
+    .....
+}
+</code></pre><p>如果当前线程可以调用java方法则调用createThreadEtc，否则调用androidCreateRawThreadEtc方法。</p>
+<pre><code>int androidCreateRawThreadEtc(android_thread_func_t entryFunction,
+                               void *userData,
+                               const char* threadName __android_unused,
+                               int32_t threadPriority,
+                               size_t threadStackSize,
+                               android_thread_id_t *threadId)
+{
+    pthread_attr_t attr;
+    pthread_attr_init(&amp;attr);
+    pthread_attr_setdetachstate(&amp;attr, PTHREAD_CREATE_DETACHED);
+    .....
+    int result = pthread_create(&amp;thread, &amp;attr,
+                        (android_pthread_entry)entryFunction, userData);
+    pthread_attr_destroy(&amp;attr);
+    ....
+}
+</code></pre><p>androidCreateRawThreadEtc里面是通过pthread库提供的pthread_create来创建线程的，entryFunction为线程入口函数，entryFunction实际为传入的_threadLoop。</p>
+<pre><code>int Thread::_threadLoop(void* user)
+{
+    Thread* const self = static_cast&lt;Thread*&gt;(user);
+
+    sp&lt;Thread&gt; strong(self-&gt;mHoldSelf);
+    wp&lt;Thread&gt; weak(strong);
+    self-&gt;mHoldSelf.clear();
+    ....
+    do {
+        if (first) {
+            first = false;
+            self-&gt;mStatus = self-&gt;readyToRun();
+            result = (self-&gt;mStatus == NO_ERROR);
+
+            if (result &amp;&amp; !self-&gt;exitPending()) {
+                result = self-&gt;threadLoop();
+            }
+        } else {
+            result = self-&gt;threadLoop();
+        }
+        if (result == false || self-&gt;mExitPending) {
+            ....
+            break;
+        }
+        .....
+        // Release our strong reference, to let a chance to the thread
+        // to die a peaceful death.
+        strong.clear();
+        // And immediately, re-acquire a strong reference for the next loop
+        strong = weak.promote();
+    } while(strong != 0);
+    ....
+}
+</code></pre><p>_threadLoop不断地执行Thread对象的成员函数threadLoop，来作为前面所创建的Native线程的执行主体, 直到满足一下三个条件之一。</p>
+<ol>
+<li>Thread对象self的成员函数threadLoop的返回值等于false。</li>
+<li>threadLoop在执行过程中，调用了requestExit请求前面的Native退出，此时mExitPending=true。</li>
+<li>Thread对象被销毁。</li>
+</ol>
+<h4 id="能同时执行C-C-代码和Java代码的Native线程的创建过程"><a href="#能同时执行C-C-代码和Java代码的Native线程的创建过程" class="headerlink" title="能同时执行C/C++代码和Java代码的Native线程的创建过程"></a>能同时执行C/C++代码和Java代码的Native线程的创建过程</h4><p>如上面所述，此时创建线程调用的是createThreadEtc， 其内部又是调用了androidCreateThreadEtc，androidCreateThreadEtc又调用gCreateThreadFn所指向的函数来创建线程。gCreateThreadFn默认指向androidCreateRawThreadEtc，在Zygote启动过程中会将改指针重新设为javaCreateThreadEtc。所以实际上是调用javaCreateThreadEtc来创建线程。</p>
+<pre><code>int AndroidRuntime::javaCreateThreadEtc(
+                                android_thread_func_t entryFunction,
+                                void* userData,
+                                const char* threadName,
+                                int32_t threadPriority,
+                                size_t threadStackSize,
+                                android_thread_id_t* threadId) {
+
+
+....
+result = androidCreateRawThreadEtc(AndroidRuntime::javaThreadShell, args,
+        threadName, threadPriority, threadStackSize, threadId);
+....                                
+}
+</code></pre><p>该函数调用了上述Threads.cpp中的androidCreateRawThreadEtc，实际调用的也是pthread_create来创建线程。与上面的主要区别是回调函数不同。</p>
+<pre><code>int AndroidRuntime::javaThreadShell(void* args) {
+    .....
+    /* hook us into the VM */
+    if (javaAttachThread(name, &amp;env) != JNI_OK)
+        return -1;
+    /* start the thread running */
+    result = (*(android_thread_func_t)start)(userData);
+
+    /* unhook us */
+    javaDetachThread();
+    free(name);
+    ....
+
+}
+</code></pre><p>该函数主要执行以下三个操作：</p>
+<ol>
+<li>调用javaAttachThread将当前线程附加到当前进程的虚拟机中去，使得当前线程不仅可以执行Native代码也能执行Java代码。</li>
+<li>调用start所指向的函数主体，即_threadLoop。</li>
+<li>在_threadLoop返回后，调用javaDetachThread将当前线程从虚拟机中移除。</li>
+</ol>
+<p>javaAttachThread实际上就是为当前线程建立以JNI上下文环境，其创建的JNIEnvExt结构体中的funcTable指向了一系列Davlik虚拟机回调函数，正是有了这些回调函数当前线程才能访问Davlik虚拟机中的JAVA代码。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/14/深入理解Java虚拟机——字节码执行引擎/" rel="next" title="深入理解Java虚拟机——字节码执行引擎">
+                <i class="fa fa-chevron-left"></i> 深入理解Java虚拟机——字节码执行引擎
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.jpg"
+                alt="weixiao" />
+            
+              <p class="site-author-name" itemprop="name">weixiao</p>
+              <p class="site-description motion-element" itemprop="description">未知的未，知晓的晓</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Davilk与Java虚拟机区别"><span class="nav-number">1.</span> <span class="nav-text">Davilk与Java虚拟机区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内存管理"><span class="nav-number">2.</span> <span class="nav-text">内存管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#进程和线程"><span class="nav-number">3.</span> <span class="nav-text">进程和线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Davlik虚拟机的启动过程"><span class="nav-number">4.</span> <span class="nav-text">Davlik虚拟机的启动过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Davlik虚拟机的运行过程"><span class="nav-number">5.</span> <span class="nav-text">Davlik虚拟机的运行过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Davlik虚拟机JNI方法的注册过程"><span class="nav-number">6.</span> <span class="nav-text">Davlik虚拟机JNI方法的注册过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dalvik虚拟机进程和线程的创建过程"><span class="nav-number">7.</span> <span class="nav-text">Dalvik虚拟机进程和线程的创建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Dalvik虚拟机进程的创建过程"><span class="nav-number">7.1.</span> <span class="nav-text">Dalvik虚拟机进程的创建过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dalvik虚拟机线程的创建过程"><span class="nav-number">7.2.</span> <span class="nav-text">Dalvik虚拟机线程的创建过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#只执行C-C-代码的Native线程的创建过程"><span class="nav-number">7.3.</span> <span class="nav-text">只执行C/C++代码的Native线程的创建过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#能同时执行C-C-代码和Java代码的Native线程的创建过程"><span class="nav-number">7.4.</span> <span class="nav-text">能同时执行C/C++代码和Java代码的Native线程的创建过程</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">weixiao</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
