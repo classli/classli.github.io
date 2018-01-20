@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="TextView是一个比较有代表性的控件，许多控件都是继承自该控件。 应用程序窗口，即Activity窗口，是由一个PhoneWindow对象，一个DecorView对象，以及一个ViewRoot对象来描述的。其中，PhoneWindow对象用来描述窗口对象，DecorView对象用来描述窗口的顶层视图，ViewRoo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TextView的实现原理">
+<meta property="og:url" content="http://yoursite.com/2018/01/20/TextView的实现原理/index.html">
+<meta property="og:site_name" content="weixiao">
+<meta property="og:description" content="TextView是一个比较有代表性的控件，许多控件都是继承自该控件。 应用程序窗口，即Activity窗口，是由一个PhoneWindow对象，一个DecorView对象，以及一个ViewRoot对象来描述的。其中，PhoneWindow对象用来描述窗口对象，DecorView对象用来描述窗口的顶层视图，ViewRoot对象除了用来与WindowManagerService服务通信之外，还用来接收">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-01-20T09:11:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TextView的实现原理">
+<meta name="twitter:description" content="TextView是一个比较有代表性的控件，许多控件都是继承自该控件。 应用程序窗口，即Activity窗口，是由一个PhoneWindow对象，一个DecorView对象，以及一个ViewRoot对象来描述的。其中，PhoneWindow对象用来描述窗口对象，DecorView对象用来描述窗口的顶层视图，ViewRoot对象除了用来与WindowManagerService服务通信之外，还用来接收">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/20/TextView的实现原理/"/>
+
+
+
+
+
+  <title>TextView的实现原理 | weixiao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">weixiao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/20/TextView的实现原理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="weixiao">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="weixiao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">TextView的实现原理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-20T16:26:17+08:00">
+                2018-01-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>TextView是一个比较有代表性的控件，许多控件都是继承自该控件。</p>
+<p>应用程序窗口，即Activity窗口，是由一个PhoneWindow对象，一个DecorView对象，以及一个ViewRoot对象来描述的。其中，PhoneWindow对象用来描述窗口对象，DecorView对象用来描述窗口的顶层视图，ViewRoot对象除了用来与WindowManagerService服务通信之外，还用来接收用户输入。</p>
+<p>各个View间是以树形的结构组织在一起，这里加上TextView直接以窗口的顶层视图为父视图，即以DecorView为父视图<br><a id="more"></a></p>
+<h3 id="TextView控件的UI绘制框架"><a href="#TextView控件的UI绘制框架" class="headerlink" title="TextView控件的UI绘制框架"></a>TextView控件的UI绘制框架</h3><p>为了告诉父视图自己所占据空间大小，所有控件必须要重写父类View中的onMeasure。</p>
+<pre><code>public class TextView extends View implements ViewTreeObserver.OnPreDrawListener {  
+    @Override  
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {  
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);  
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);  
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);  
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);  
+
+        int width;  
+        int height;  
+          ...
+
+        setMeasuredDimension(width, height);  
+    }  
+}  
+</code></pre><p>widthMeasureSpec和heightMeasureSpec分别用来高宽的测量范围，该范围包含两个分量。</p>
+<p>第一个是mode分量，高两位表示。有三种类型分别是MeasureSpec.UNSPECIFIED（0）、MeasureSpec.EXACTLY（1）、和MeasureSpec.AT_MOST（2）</p>
+<p>第二个是size分量，使用低30位表示。</p>
+<ul>
+<li>当mode=MeasureSpec.EXACTLY, size等于父视图要求当前控件的高宽。</li>
+<li>当mode=MeasureSpec.AT_MOST, size等于父视图限定当前控件的最大高宽。</li>
+<li>当mode=MeasureSpec.UNSPECIFIED, 父视图不限定当前控件的高宽。</li>
+</ul>
+<p>根据上述规则控件测量好自己的高宽后，需调用setMeasuredDimension来通知父视图自己的高宽。</p>
+<p>对于onLayout只有容器类控件才需要布局操作，因为子控件的位置由父控件来设置，而TextView控件不是容器类控件，所以它可以不重写父类View的onLayout。</p>
+<p>经过测量和布局后，控件的位置和大小就确定下来了，为了能绘制控件的UI, 需要重写父类view中的onDraw。</p>
+<p>为什么要规定所有与UI相关的操作都必须在主线程中执行呢？因为UI相关的操作需要大量地访问控件的内部成员以及窗口绘图面的图形缓冲区，因此如果不将所有的UI操作都限定在同一线程里，那么就会涉及多线程同步问题，关键是线程同步开销将很大。</p>
+<h3 id="TextView控件获取键盘输入的过程"><a href="#TextView控件获取键盘输入的过程" class="headerlink" title="TextView控件获取键盘输入的过程"></a>TextView控件获取键盘输入的过程</h3><p>每一个窗口创建的时候，都会与系统输入管理器建立一个输入接收通道。输入管理器中有两个线程，一个线程是用来监听用户的输入行为，另一个线程用来将该输入事件分发给当前激活的窗口，这个分发的线程就是通过前面建立的通道进行的。</p>
+<p>当前窗口接收到输入事件后，就将该事件封装成消息发送到主线程的消息队列中去，当处理该消息时就会调用当前窗口所关联的ViewRoot对象的deliverKeyEvent或者deliverPointerEvent来将前面接收到的用户输入分发给合适的控件。deliverKeyEvent负责分发键盘输入事件，deliverPointerEvent负责分发触摸屏输入事件。</p>
+<p>在最新的android代码中ViewRoot类变成了ViewRootImpl类，上述两个方法也不存在了。ViewRootImpl通过Handler来处理各种消息。</p>
+<pre><code>public final class ViewRootImpl implements ViewParent,
+        View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
+    final class ViewRootHandler extends Handler {
+        public void handleMessage(Message msg) {
+            ...
+            case MSG_PROCESS_INPUT_EVENTS:
+            mProcessInputEventsScheduled = false;
+            doProcessInputEvents();
+            break;
+            ...
+        }
+    }                 
+}
+</code></pre><p>其中 doProcessInputEvents会调用deliverInputEvent传递输入事件，deliverInputEvent会调用InputStage内部类的deliver方法进行处理,最后会调用到ViewPreImeInputStage内部类的 processKeyEvent方法。</p>
+<pre><code>public final class ViewRootImpl implements ViewParent,
+            View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks     {
+    final class ViewPreImeInputStage extends InputStage {
+         private int processKeyEvent(QueuedInputEvent q) {
+            final KeyEvent event = (KeyEvent)q.mEvent;
+            if (mView.dispatchKeyEventPreIme(event)) {
+                return FINISH_HANDLED;
+            }
+            return FORWARD;
+        }
+    }                 
+}
+</code></pre><p>mView指向窗口的顶层视图，即一个DecorView对象，系统将先调用dispatchKeyEventPreIme方法让它优先于输入法处理键盘事件，如果dispatchKeyEventPreIme返回为true，那么说明键盘处理已完成，后续的输入法处理流程不需要进行了。</p>
+<p>需要注意的是，只有当前窗口在显示输入法的情况下，ViewRootImpl才将键盘事件分发给输入法处理，这是通过检查mLastWasImTarget变量是否等于true来实现。</p>
+<p>当通过dispatchInputEvent将键盘事件交给输入法处理时，同时还会传递一个回调函数给输入法，以遍当输入结束后，调用该函数来通知ViewRootImpl，然后将该键盘事件分发给窗口处理。</p>
+<p>下面先分析下输入法处理前的键盘处理过程。</p>
+<p>DecorView类的dispatchKeyEventPreIme从ViewGroup继承下来。</p>
+<pre><code>public abstract class ViewGroup extends View implements ViewParent, ViewManager {
+    @Override
+    public boolean dispatchKeyEventPreIme(KeyEvent event) {
+        if ((mPrivateFlags &amp; (PFLAG_FOCUSED | PFLAG_HAS_BOUNDS))
+                == (PFLAG_FOCUSED | PFLAG_HAS_BOUNDS)) {
+            return super.dispatchKeyEventPreIme(event);
+        } else if (mFocused != null &amp;&amp; (mFocused.mPrivateFlags &amp; PFLAG_HAS_BOUNDS)
+                == PFLAG_HAS_BOUNDS) {
+            return mFocused.dispatchKeyEventPreIme(event);
+        }
+        return false;
+    }
+}
+</code></pre><p>在当前视图容器能够获得焦点并且容器已经计算过大小的情况下，就调用视图容器父类中的dispatchKeyEventPreIme。如果上述条件不满足，但视图容器中有一个子视图可以获得焦点，并且子视图大小也计算过了，那么将调用子视图的dispatchKeyEventPreIme。</p>
+<p>最终都是通过调用View类的dispatchKeyEventPreIme来在输入法之前处理event事件, dispatchKeyEventPreIme只是简单地调用了onKeyPreIme, 只要我们重写onKeyPreIme方法即可在输入法之前处理键盘事件，该方法返回true表示键盘事件处理完成不在传递下去，否则返回false。</p>
+<p>当上面执行完之后，如果event事件继续传递，最终又会通过上述的ViewRootImpl的消息处理机制调用到ViewPostImeInputStage内部onProcess方法。</p>
+<pre><code>public final class ViewRootImpl implements ViewParent,
+                    View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks     {
+    final class ViewPostImeInputStage extends InputStage {
+         protected int onProcess(QueuedInputEvent q) {
+            if (q.mEvent instanceof KeyEvent) {
+                return processKeyEvent(q);
+            }
+            ....
+               }
+            private int processKeyEvent(QueuedInputEvent q) {
+            final KeyEvent event = (KeyEvent)q.mEvent;
+
+            // Deliver the key to the view hierarchy.
+            if (mView.dispatchKeyEvent(event)) {
+                return FINISH_HANDLED;
+            }
+            ....
+            // Handle automatic focus changes.
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                int direction = 0;
+                switch (event.getKeyCode()) {
+                    case KeyEvent.KEYCODE_DPAD_LEFT:
+                        if (event.hasNoModifiers()) {
+                            direction = View.FOCUS_LEFT;
+                        }
+                        break;
+                    ...
+                }
+                if (direction != 0) {
+                    View focused = mView.findFocus();
+                    if (focused != null) {
+                        View v = focused.focusSearch(direction);
+                        if (v != null &amp;&amp; v != focused) {
+                            // do the math the get the interesting rect
+                            // of previous focused into the coord system of
+                            // newly focused view
+                            focused.getFocusedRect(mTempRect);
+                            if (mView instanceof ViewGroup) {
+                                ((ViewGroup) mView).offsetDescendantRectToMyCoords(
+                                        focused, mTempRect);
+                                ((ViewGroup) mView).offsetRectIntoDescendantCoords(
+                                        v, mTempRect);
+                            }
+                            if (v.requestFocus(direction, mTempRect)) {
+                                playSoundEffect(SoundEffectConstants
+                                        .getContantForFocusDirection(direction));
+                                return FINISH_HANDLED;
+                            }
+                        }
+                        ...
+                    }
+                }
+         }
+    }                 
+}
+</code></pre><p>上面的mView.dispatchKeyEvent就是将键盘事件交给当前激活窗口的顶层视图来处理，mView即指向DecorView。如果顶层视图还希望该键盘事件可以被子视图处理，dispatchKeyEvent就会返回false，然后就会根据屏幕触点方向调整子视图的焦点，子视图通过requestFocus获得焦点。</p>
+<p>接下来分享下DecorView的dispatchKeyEvent方法。</p>
+<pre><code>public class DecorView extends FrameLayout implements RootViewSurfaceTaker, WindowCallbacks {
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        final int keyCode = event.getKeyCode();
+        final int action = event.getAction();
+        final boolean isDown = action == KeyEvent.ACTION_DOWN;
+        ....    
+        if (!mWindow.isDestroyed()) {
+            final Window.Callback cb = mWindow.getCallback();
+            final boolean handled = cb != null &amp;&amp; mFeatureId &lt; 0 ? cb.dispatchKeyEvent(event)
+                    : super.dispatchKeyEvent(event);
+            if (handled) {
+                return true;
+            }
+        }
+
+        return isDown ? mWindow.onKeyDown(mFeatureId, event.getKeyCode(), event)
+                : mWindow.onKeyUp(mFeatureId, event.getKeyCode(), event);
+    }
+}
+</code></pre><p>假设当前处理DecorView对象的顶层视图是一个Activity，并且该Activity实现了个一Window.Callback接口，那么将调用该Activity的Window.Callback接口。如果Window.Callback的dispatchKeyEvent返回false，那该键盘事件将继续传递给PhoneWindow对像的onKeyDown或onKeyUp处理，这两个方法主要用来处理一些特殊按键电话键或音量键。</p>
+<p>Activity类的dispatchKeyEvent方法如下。</p>
+<pre><code>public boolean dispatchKeyEvent(KeyEvent event) {
+       onUserInteraction();
+       ...
+       Window win = getWindow();
+       if (win.superDispatchKeyEvent(event)) {
+           return true;
+       }
+       View decor = mDecor;
+       if (decor == null) decor = win.getDecorView();
+       return event.dispatch(this, decor != null
+               ? decor.getKeyDispatcherState() : null, this);
+}
+</code></pre><p>该方法首先将event事件交给了当前Activity的PhoneWindow对象处理，然后再通过dispatch将该event事件交给当前的Activity组件处理，dispatch执行过程就是调用Activity类的成员函数onKeyDown、onKeyUp或者onKeyMultiple来处理参数event所描述的键盘事件。</p>
+<p>PhoneWindow的superDispatchKeyEvent最终还是调用了ViewGroup的dispatchKeyEvent处理，处理方式和ViewGroup中的dispatchKeyEventPreIme类似。dispatchKeyEvent会调用到View类中的dispatchKeyEvent，然后又调用了KeyEvent类的dispatch，该dispatch用于分发event事件，最后被点击的TextView就可以获得这个键盘事件，TextView重写了父类的onKeyDown方法，里面会调用doKeyDown进行焦点获取等处理。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/14/Dalvik虚拟机/" rel="next" title="Dalvik虚拟机">
+                <i class="fa fa-chevron-left"></i> Dalvik虚拟机
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.jpg"
+                alt="weixiao" />
+            
+              <p class="site-author-name" itemprop="name">weixiao</p>
+              <p class="site-description motion-element" itemprop="description">未知的未，知晓的晓</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">18</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TextView控件的UI绘制框架"><span class="nav-number">1.</span> <span class="nav-text">TextView控件的UI绘制框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TextView控件获取键盘输入的过程"><span class="nav-number">2.</span> <span class="nav-text">TextView控件获取键盘输入的过程</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">weixiao</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
